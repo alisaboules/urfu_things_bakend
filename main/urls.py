@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     # Регистрация
     path('register/', views.RegisterView.as_view(), name='register'),
+    path('me/', views.MeView.as_view(), name='me'),
+
     
     # Категории и пункты выдачи
     path('categories/', views.CategoryListAPIView.as_view(), name='categories'),
