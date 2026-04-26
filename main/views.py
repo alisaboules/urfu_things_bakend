@@ -107,7 +107,7 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
     #     match_view = MatchFoundItemsView()
     #     matches = find_matches(lost_item)
     def perform_create(self, serializer):
-        lost_item = serializer.save(lost_by=self.request.user)
+        lost_item = serializer.save(user=self.request.user)
 
         # ищем совпадения
         matches = find_matches(lost_item)
