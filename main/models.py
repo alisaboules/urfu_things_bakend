@@ -91,6 +91,21 @@ class PickupPoint(models.Model):
 
 
 class FoundItem(models.Model):
+    category = models.ForeignKey(
+    Category,
+    on_delete=models.RESTRICT,
+    null=True,
+    blank=True
+)
+
+    pickup_point = models.ForeignKey(
+    PickupPoint,
+    on_delete=models.RESTRICT,
+    null=True,
+    blank=True
+)
+
+
     """Находки"""
     LOCATION_TYPE_CHOICES = [
         ('building', 'Здание'),
