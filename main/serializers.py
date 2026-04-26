@@ -83,13 +83,15 @@ class FoundItemSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(),
         required=False,
-        allow_null=True
+        allow_null=True,
+        default=None
     )
 
     pickup_point = serializers.PrimaryKeyRelatedField(
         queryset=PickupPoint.objects.all(),
         required=False,
-        allow_null=True
+        allow_null=True,
+        default=None
     )
 
     class Meta:
