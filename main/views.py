@@ -59,7 +59,7 @@ class FoundItemListCreateAPIView(generics.ListCreateAPIView):
         return [permissions.AllowAny()]
     
     def perform_create(self, serializer):
-        serializer.save(found_by=self.request.user)
+        serializer.save(user=self.request.user)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
