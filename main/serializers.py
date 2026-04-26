@@ -66,19 +66,41 @@ class PhotoSerializer(serializers.ModelSerializer):
         fields = ['id', 'image_url', 'uploaded_at']
 
 
-class FoundItemSerializer(serializers.ModelSerializer):
-    user_username = serializers.ReadOnlyField(source='user.username')
-    category_name = serializers.ReadOnlyField(source='category.name')
-    pickup_point_name = serializers.ReadOnlyField(source='pickup_point.name')
-    photos = PhotoSerializer(many=True, read_only=True)
+# class FoundItemSerializer(serializers.ModelSerializer):
+#     user_username = serializers.ReadOnlyField(source='user.username')
+#     category_name = serializers.ReadOnlyField(source='category.name')
+#     pickup_point_name = serializers.ReadOnlyField(source='pickup_point.name')
+#     photos = PhotoSerializer(many=True, read_only=True)
     
+#     class Meta:
+#         model = FoundItem
+#         fields = ['id', 'user', 'user_username', 'category', 'category_name', 
+#                   'pickup_point', 'pickup_point_name', 'location_type', 'location_ref',
+#                   'description', 'status', 'created_at', 'photos']
+#         read_only_fields = ['user', 'created_at']
+
+class FoundItemSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
+    pickup_point = serializers.PrimaryKeyRelatedField(
+        queryset=PickupPoint.objects.all(),
+        required=False,
+        allow_null=True
+    )
+
     class Meta:
         model = FoundItem
-        fields = ['id', 'user', 'user_username', 'category', 'category_name', 
-                  'pickup_point', 'pickup_point_name', 'location_type', 'location_ref',
-                  'description', 'status', 'created_at', 'photos']
+        fields = [
+            'id', 'user',
+            'category', 'pickup_point',
+            'location_type', 'location_ref',
+            'description', 'status', 'created_at'
+        ]
         read_only_fields = ['user', 'created_at']
-
 
 class LostItemSerializer(serializers.ModelSerializer):
     user_username = serializers.ReadOnlyField(source='user.username')
