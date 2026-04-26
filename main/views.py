@@ -7,6 +7,7 @@ from .models import Category, Log, PickupPoint, FoundItem, LostItem, User
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
+from .utils import find_matches
 from rest_framework.pagination import PageNumberPagination
 from .serializers import (
     CategorySerializer, LogSerializer, PickupPointSerializer, 
@@ -98,25 +99,38 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
         context.update({"request": self.request})
         return context
     
+    # def perform_create(self, serializer):
+    #     lost_item = serializer.save(lost_by=self.request.user)
+    
+    #     # Поиск совпадений и отправка уведомлений
+    #     from .views import MatchFoundItemsView
+    #     match_view = MatchFoundItemsView()
+    #     matches = find_matches(lost_item)
     def perform_create(self, serializer):
         lost_item = serializer.save(lost_by=self.request.user)
+
+        # ищем совпадения
+        matches = find_matches(lost_item)
+
+        # если есть совпадения → отправляем уведомление
+        if matches:
+            send_match_notification(lost_item, matches)
+
+# if matches:
+#     send_match_notification(lost_item, matches)
+
+#         # Создаём имитацию запроса для поиска совпадений
+#         # import json
+#         # from django.test import RequestFactory
     
-        # Поиск совпадений и отправка уведомлений
-        from .views import MatchFoundItemsView
-        match_view = MatchFoundItemsView()
+#         # factory = RequestFactory()
+#         # mock_request = factory.get(f'/api/match/{lost_item.lost_id}/')
+#         # mock_request.user = self.request.user
     
-        # Создаём имитацию запроса для поиска совпадений
-        import json
-        from django.test import RequestFactory
+#         response = match_view.get(mock_request, lost_item_id=lost_item.lost_id)
     
-        factory = RequestFactory()
-        mock_request = factory.get(f'/api/match/{lost_item.lost_id}/')
-        mock_request.user = self.request.user
-    
-        response = match_view.get(mock_request, lost_item_id=lost_item.lost_id)
-    
-        if response.status_code == 200 and response.data.get('matches'):
-            send_match_notification(lost_item, response.data['matches'])
+#         if response.status_code == 200 and response.data.get('matches'):
+#             send_match_notification(lost_item, response.data['matches'])
 
 class LostItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     # Просмотр, обновление и удаление пропажи
