@@ -29,22 +29,28 @@ from .utils import log_action, get_client_ip
 
 class LoggingMiddleware:
     def __call__(self, request):
+
+        body = None
+        if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            try:
+                body = request.body.decode('utf-8')
+            except Exception:
+                body = str(request.body)
+
         response = self.get_response(request)
 
-        if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
-            user = getattr(request, "user", None)
-
-            if user and user.is_authenticated:
-                log_action(
-                    user=user,
-                    action_type=request.method.lower(),
-                    entity_type=request.path.split('/')[1] if len(request.path.split('/')) > 1 else 'unknown',
-                    entity_id=0,
-                    action_data={
-                        "path": request.path,
-                        "note": "body logging disabled to avoid DRF conflict"
-                    },
-                    ip_address=get_client_ip(request)
-                )
+        user = request.user if request.user.is_authenticated else None
+        if user:
+            log_action(
+                user=user,
+                action_type=request.method.lower(),
+                entity_type=request.path.split('/')[1] if len(request.path.split('/')) > 1 else 'unknown',
+                entity_id=0,
+                action_data={
+                    'path': request.path,
+                    'data': body[:500] if body else None
+                },
+                ip_address=get_client_ip(request)
+            )
 
         return response
