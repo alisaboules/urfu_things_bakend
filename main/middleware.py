@@ -30,33 +30,36 @@ from .utils import log_action, get_client_ip
 from django.utils.deprecation import MiddlewareMixin
 import json
 
-class LoggingMiddleware(MiddlewareMixin):
+class LoggingMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
 
-    def process_response(self, request, response):
+    def __call__(self, request):
+
+        body = None
 
         if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
-
-            user = getattr(request, "user", None)
-            if user and user.is_authenticated:
-
-                # ВАЖНО: НЕ request.body
-                data = getattr(request, "data", None)
-
+            # НЕ трогаем request.body если это multipart
+            if request.content_type != 'multipart/form-data':
                 try:
-                    safe_data = dict(data) if data else None
+                    body = request.body.decode('utf-8')
                 except Exception:
-                    safe_data = str(data) if data else None
+                    body = str(request.body)
 
-                log_action(
-                    user=user,
-                    action_type=request.method.lower(),
-                    entity_type=request.path.split('/')[1] if len(request.path.split('/')) > 1 else 'unknown',
-                    entity_id=0,
-                    action_data={
-                        "path": request.path,
-                        "data": safe_data
-                    },
-                    ip_address=get_client_ip(request)
-                )
+        response = self.get_response(request)
+
+        user = request.user if request.user.is_authenticated else None
+        if user:
+            log_action(
+                user=user,
+                action_type=request.method.lower(),
+                entity_type=request.path.split('/')[1] if len(request.path.split('/')) > 1 else 'unknown',
+                entity_id=0,
+                action_data={
+                    'path': request.path,
+                    'data': body[:500] if body else None
+                },
+                ip_address=get_client_ip(request)
+            )
 
         return response
