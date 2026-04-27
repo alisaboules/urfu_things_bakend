@@ -93,6 +93,8 @@ class FoundItemSerializer(serializers.ModelSerializer):
         allow_null=True,
         default=None
     )
+    image = serializers.ImageField(required=False)
+
 
     class Meta:
         model = FoundItem
@@ -100,7 +102,7 @@ class FoundItemSerializer(serializers.ModelSerializer):
             'id', 'user',
             'category', 'pickup_point',
             'location_type', 'location_ref',
-            'description', 'status', 'created_at'
+            'description', 'status', 'created_at', 'image'
         ]
         read_only_fields = ['user', 'created_at']
 

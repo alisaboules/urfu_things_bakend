@@ -104,6 +104,11 @@ class FoundItem(models.Model):
     null=True,
     blank=True
 )
+#     image = models.ImageField(
+#     upload_to='items/',
+#     blank=True,
+#     null=True
+# )
 
 
     """Находки"""
@@ -129,7 +134,8 @@ class FoundItem(models.Model):
     description = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    image = models.ImageField(upload_to='found_items/', null=True, blank=True)
+
     class Meta:
         db_table = 'found_item'
         verbose_name = 'Находка'
@@ -140,6 +146,12 @@ class FoundItem(models.Model):
 
 
 class LostItem(models.Model):
+    image = models.ImageField(
+    upload_to='items/',
+    blank=True,
+    null=True
+)
+
     """Пропажи"""
     STATUS_CHOICES = [
         ('active', 'Активна'),
