@@ -110,7 +110,11 @@ class LostItemSerializer(serializers.ModelSerializer):
     user_username = serializers.ReadOnlyField(source='user.username')
     category_name = serializers.ReadOnlyField(source='category.name')
     photos = PhotoSerializer(many=True, read_only=True)
-    
+    category = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(),
+        required=False,
+        allow_null=True
+    )
     class Meta:
         model = LostItem
         fields = ['id', 'user', 'user_username', 'category', 'category_name', 

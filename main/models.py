@@ -151,6 +151,14 @@ class LostItem(models.Model):
     blank=True,
     null=True
 )
+    category = models.ForeignKey(
+    Category,
+    on_delete=models.RESTRICT,
+    db_column='category_id',
+    null=True,
+    blank=True
+)
+
 
     """Пропажи"""
     STATUS_CHOICES = [
@@ -161,7 +169,6 @@ class LostItem(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id', related_name='lost_items')
-    category = models.ForeignKey(Category, on_delete=models.RESTRICT, db_column='category_id')
     location_zone = models.CharField(max_length=50, blank=True, null=True)
     location_text = models.CharField(max_length=200, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
