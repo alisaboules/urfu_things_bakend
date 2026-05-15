@@ -31,7 +31,7 @@ class User(AbstractUser):
         verbose_name_plural = 'Пользователи'
     
     def __str__(self):
-        return self.full_name
+        return self.first_name
 
 
 class Role(models.Model):
