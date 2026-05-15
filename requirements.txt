@@ -6,3 +6,4 @@ python-dotenv==1.0.1
 psycopg2-binary==2.9.10
 Pillow==10.4.0
 gunicorn
+dj-database-url==2.2.0
