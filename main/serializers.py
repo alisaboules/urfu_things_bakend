@@ -169,9 +169,10 @@ class LogSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'username', 'user_role', 'action_type', 
                   'entity_type', 'entity_id', 'action_data', 'created_at', 'ip_address']
 
+
 class NearestPickupPointSerializer(serializers.Serializer):
-    latitude = serializers.DecimalField(max_digits=10, decimal_places=7)
-    longitude = serializers.DecimalField(max_digits=10, decimal_places=7)
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField()
 
 
 class PickupPointWithDistanceSerializer(PickupPointSerializer):
