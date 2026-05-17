@@ -6,6 +6,8 @@ from .models import Category, Log, PickupPoint, FoundItem, LostItem, User
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
+from .utils import find_matches
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from .serializers import (
     CategorySerializer, LogSerializer, PickupPointSerializer, 

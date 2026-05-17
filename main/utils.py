@@ -1,7 +1,9 @@
 from .models import Log
 import json
 from .models import FoundItem
+from .models import PickupPoint
 from .serializers import FoundItemSerializer
+from math import radians, sin, cos, sqrt, atan2
 # from .views import calculate_match_score
 
 def log_action(user, action_type, entity_type, entity_id, action_data=None, ip_address=None):
@@ -71,3 +73,53 @@ def calculate_match_score(lost_item, found_item):
         score += 20
 
     return min(100, score)
+
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """
+    Рассчитывает расстояние между двумя точками на Земле (в километрах)
+    Используется формула гаверсинуса
+    """
+    R = 6371  # Радиус Земли в километрах
+    
+    lat1_rad = radians(lat1)
+    lon1_rad = radians(lon1)
+    lat2_rad = radians(lat2)
+    lon2_rad = radians(lon2)
+    
+    dlat = lat2_rad - lat1_rad
+    dlon = lon2_rad - lon1_rad
+    
+    a = sin(dlat / 2)**2 + cos(lat1_rad) * cos(lat2_rad) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    
+    distance = R * c
+    return distance
+
+
+def get_nearest_pickup_point(latitude, longitude):
+    """
+    Находит ближайший пункт выдачи к заданным координатам
+    """
+    pickup_points = PickupPoint.objects.filter(
+        latitude__isnull=False,
+        longitude__isnull=False
+    )
+    
+    if not pickup_points.exists():
+        return None
+    
+    nearest_point = None
+    min_distance = float('inf')
+    
+    for point in pickup_points:
+        distance = calculate_distance(
+            latitude, longitude,
+            float(point.latitude), float(point.longitude)
+        )
+        
+        if distance < min_distance:
+            min_distance = distance
+            nearest_point = point
+    
+    return nearest_point, min_distance
