@@ -106,7 +106,7 @@ def get_nearest_pickup_point(latitude, longitude):
     )
     
     if not pickup_points.exists():
-        return None
+        return None, None
     
     nearest_point = None
     min_distance = float('inf')
