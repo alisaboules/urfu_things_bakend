@@ -80,9 +80,10 @@ class PickupPoint(models.Model):
     name = models.CharField(max_length=50)
     location = models.CharField(max_length=100, blank=True, null=True)
     building = models.ForeignKey(Building, on_delete=models.RESTRICT, db_column='building_id')
-    
-    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, verbose_name='Широта')
-    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, verbose_name='Долгота')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    # latitude = models.FlField(max_digits=10, decimal_places=7, null=True, blank=True, verbose_name='Широта')
+    # longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, verbose_name='Долгота')
     address = models.CharField(max_length=200, blank=True, null=True, verbose_name='Полный адрес')
     
     class Meta:
