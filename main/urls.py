@@ -41,5 +41,7 @@ urlpatterns = [
     path('logs/', views.LogListView.as_view(), name='log-list'),
     path('logs/<int:pk>/', views.LogDetailView.as_view(), name='log-detail'),
 
-    # hhkjlkl
+    # Геолокация и пункты выдачи
+    path('pickup-points/nearby/', views.NearestPickupPointView.as_view(), name='nearest-pickup-point'),
+    path('pickup-points/suggest/', views.AutoSuggestPickupPointView.as_view(), name='suggest-pickup-point'),
 ]
