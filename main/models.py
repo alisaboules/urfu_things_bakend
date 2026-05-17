@@ -81,6 +81,10 @@ class PickupPoint(models.Model):
     location = models.CharField(max_length=100, blank=True, null=True)
     building = models.ForeignKey(Building, on_delete=models.RESTRICT, db_column='building_id')
     
+    latitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, verbose_name='Широта')
+    longitude = models.DecimalField(max_digits=10, decimal_places=7, null=True, blank=True, verbose_name='Долгота')
+    address = models.CharField(max_length=200, blank=True, null=True, verbose_name='Полный адрес')
+    
     class Meta:
         db_table = 'pickup_point'
         verbose_name = 'Пункт выдачи'
@@ -88,7 +92,14 @@ class PickupPoint(models.Model):
     
     def __str__(self):
         return self.name
-
+    
+    class Meta:
+        db_table = 'pickup_point'
+        verbose_name = 'Пункт выдачи'
+        verbose_name_plural = 'Пункты выдачи'
+    
+    def __str__(self):
+        return self.name
 
 class FoundItem(models.Model):
     category = models.ForeignKey(

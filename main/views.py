@@ -7,13 +7,13 @@ from .models import Category, Log, PickupPoint, FoundItem, LostItem, User
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
-from .utils import find_matches
+from .utils import find_matches, get_nearest_pickup_point, calculate_distance
 from rest_framework.pagination import PageNumberPagination
 from .serializers import (
     CategorySerializer, LogSerializer, PickupPointSerializer, 
     FoundItemSerializer, LostItemSerializer, 
     RegisterSerializer, UserSerializer, FoundItemStatusUpdateSerializer,
-    LostItemStatusUpdateSerializer
+    LostItemStatusUpdateSerializer, NearestPickupPointSerializer
 )
 from .permissions import (
     IsAdmin, IsStaffOrPickupPoint, 
@@ -558,3 +558,126 @@ class MeView(APIView):
             "username": user.username,
             "role": user.role if hasattr(user, "role") else None
         })
+    
+class NearestPickupPointView(APIView):
+    """
+    Определяет ближайший пункт выдачи на основе геолокации пользователя
+    Принимает POST запрос с координатами или GET запрос без параметров
+    """
+    permission_classes = [permissions.AllowAny]
+    
+    def get(self, request):
+        """
+        GET запрос (для клиентов, которые не хотят/не могут делиться геолокацией)
+        Возвращает все пункты выдачи с сортировкой по умолчанию
+        """
+        pickup_points = PickupPoint.objects.filter(
+            latitude__isnull=False,
+            longitude__isnull=False
+        )
+        serializer = PickupPointSerializer(pickup_points, many=True)
+        return Response({
+            'nearest': None,
+            'message': 'Передайте координаты через POST запрос для определения ближайшего пункта',
+            'all_points': serializer.data
+        })
+    
+    def post(self, request):
+        """
+        POST запрос с координатами пользователя
+        Пример тела запроса:
+        {
+            "latitude": 56.8383,
+            "longitude": 60.6310
+        }
+        """
+        serializer = NearestPickupPointSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        latitude = float(serializer.validated_data['latitude'])
+        longitude = float(serializer.validated_data['longitude'])
+        
+        # Находим ближайший пункт
+        nearest_point, distance = get_nearest_pickup_point(latitude, longitude)
+        
+        if not nearest_point:
+            return Response({
+                'error': 'Нет доступных пунктов выдачи с координатами'
+            }, status=404)
+        
+        # Получаем все пункты с расстояниями (для дополнительной информации)
+        all_points = []
+        pickup_points = PickupPoint.objects.filter(
+            latitude__isnull=False,
+            longitude__isnull=False
+        )
+        
+        for point in pickup_points:
+            point_distance = calculate_distance(
+                latitude, longitude,
+                float(point.latitude), float(point.longitude)
+            )
+            point_data = PickupPointSerializer(point).data
+            point_data['distance_km'] = round(point_distance, 2)
+            all_points.append(point_data)
+        
+        # Сортируем по расстоянию
+        all_points.sort(key=lambda x: x['distance_km'])
+        
+        # Формируем ответ
+        nearest_data = PickupPointSerializer(nearest_point).data
+        nearest_data['distance_km'] = round(distance, 2)
+        
+        return Response({
+            'nearest': nearest_data,
+            'nearest_point_id': nearest_point.id,  # Удобно для автоматического выбора в форме
+            'distance_km': round(distance, 2),
+            'all_points': all_points,  # Все пункты с расстояниями
+            'user_location': {
+                'latitude': latitude,
+                'longitude': longitude
+            }
+        })
+
+class AutoSuggestPickupPointView(APIView):
+    """
+    Автоматически определяет пункт выдачи на основе геолокации
+    Используется при создании объявления о находке
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        serializer = NearestPickupPointSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            # Если координаты не переданы, возвращаем первый пункт
+            first_point = PickupPoint.objects.first()
+            return Response({
+                'suggested': PickupPointSerializer(first_point).data if first_point else None,
+                'message': 'Координаты не переданы. Показан пункт по умолчанию.',
+                'user_location': None
+            })
+        
+        latitude = float(serializer.validated_data['latitude'])
+        longitude = float(serializer.validated_data['longitude'])
+        
+        nearest_point, distance = get_nearest_pickup_point(latitude, longitude)
+        
+        if nearest_point:
+            return Response({
+                'suggested': PickupPointSerializer(nearest_point).data,
+                'suggested_id': nearest_point.id,
+                'distance_km': round(distance, 2),
+                'user_location': {
+                    'latitude': latitude,
+                    'longitude': longitude
+                },
+                'message': f'Ближайший пункт выдачи: {nearest_point.name} ({round(distance, 2)} км)'
+            })
+        
+        return Response({
+            'suggested': None,
+            'error': 'Не удалось определить ближайший пункт'
+        }, status=404)

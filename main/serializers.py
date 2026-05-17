@@ -168,3 +168,14 @@ class LogSerializer(serializers.ModelSerializer):
         model = Log
         fields = ['id', 'user', 'username', 'user_role', 'action_type', 
                   'entity_type', 'entity_id', 'action_data', 'created_at', 'ip_address']
+
+class NearestPickupPointSerializer(serializers.Serializer):
+    latitude = serializers.DecimalField(max_digits=10, decimal_places=7)
+    longitude = serializers.DecimalField(max_digits=10, decimal_places=7)
+
+
+class PickupPointWithDistanceSerializer(PickupPointSerializer):
+    distance_km = serializers.FloatField(read_only=True)
+    
+    class Meta(PickupPointSerializer.Meta):
+        fields = PickupPointSerializer.Meta.fields + ['distance_km', 'latitude', 'longitude', 'address']
