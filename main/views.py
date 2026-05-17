@@ -602,9 +602,9 @@ class NearestPickupPointView(APIView):
         # Находим ближайший пункт
         nearest_point, distance = get_nearest_pickup_point(latitude, longitude)
         
-        if not nearest_point:
+        if not nearest_point or distance is None:
             return Response({
-                'error': 'Нет доступных пунктов выдачи с координатами'
+                "error": "Нет доступных пунктов выдачи"
             }, status=404)
         
         # Получаем все пункты с расстояниями (для дополнительной информации)
