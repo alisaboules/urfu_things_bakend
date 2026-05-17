@@ -40,4 +40,6 @@ urlpatterns = [
     # Логи
     path('logs/', views.LogListView.as_view(), name='log-list'),
     path('logs/<int:pk>/', views.LogDetailView.as_view(), name='log-detail'),
+
+    # hhkjlkl
 ]
