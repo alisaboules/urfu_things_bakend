@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import UploadAvatarView
 
 urlpatterns = [
     # Регистрация
@@ -10,7 +11,7 @@ urlpatterns = [
     # Категории и пункты выдачи
     path('categories/', views.CategoryListAPIView.as_view(), name='categories'),
     path('pickup-points/', views.PickupPointListAPIView.as_view(), name='pickup-points'),
-    
+    path('me/avatar/', UploadAvatarView.as_view(), name='upload-avatar'),
     # Находки
     path('found/', views.FoundItemListCreateAPIView.as_view(), name='found-list'),
     path('found/<int:pk>/', views.FoundItemRetrieveUpdateDestroyAPIView.as_view(), name='found-detail'),
