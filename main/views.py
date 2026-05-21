@@ -7,6 +7,10 @@ from .models import Category, Log, PickupPoint, FoundItem, LostItem, User
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 from .utils import find_matches, get_nearest_pickup_point, calculate_distance
 from rest_framework.pagination import PageNumberPagination
 from .serializers import (
@@ -681,3 +685,27 @@ class AutoSuggestPickupPointView(APIView):
             'suggested': None,
             'error': 'Не удалось определить ближайший пункт'
         }, status=404)
+    
+class UploadAvatarView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        user = request.user
+
+        file = request.FILES.get('avatar')
+
+        if not file:
+            return Response(
+                {"error": "Файл не найден"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.avatar = file
+        user.save()
+
+        serializer = UserSerializer(
+            user,
+            context={'request': request}
+        )
+
+        return Response(serializer.data)

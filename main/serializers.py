@@ -8,12 +8,19 @@ from .models import (
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source='first_name', read_only=True)
-    
+    avatar = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'role', 'created_at', 'full_name']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'role', 'created_at', 'full_name', 'avatar']
 
+    def get_avatar(self, obj):
+        request = self.context.get('request')
 
+        if obj.avatar:
+            return request.build_absolute_uri(obj.avatar.url)
+
+        return None
+    
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)

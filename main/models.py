@@ -17,7 +17,11 @@ class User(AbstractUser):
     last_name = models.CharField(max_length=100, blank=True)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='student')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    avatar = models.ImageField(
+    upload_to='avatars/',
+    blank=True,
+    null=True
+)
     # Дополнительные поля
     phone = models.CharField(max_length=20, blank=True, null=True)
     group_number = models.CharField(max_length=20, blank=True, null=True)
