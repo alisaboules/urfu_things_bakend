@@ -14,12 +14,15 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'role', 'created_at', 'full_name', 'avatar']
 
     def get_avatar(self, obj):
+        if not obj.avatar:
+            return None
+
         request = self.context.get('request')
 
-        if obj.avatar:
+        if request:
             return request.build_absolute_uri(obj.avatar.url)
 
-        return None
+        return obj.avatar.url
     
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
