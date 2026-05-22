@@ -562,7 +562,24 @@ class MeView(APIView):
             "username": user.username,
             "role": user.role if hasattr(user, "role") else None
         })
-    
+
+    def patch(self, request):
+        user = request.user
+
+        serializer = UserSerializer(
+            user,
+            data=request.data,
+            partial=True
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+
+        return Response(
+            serializer.errors,
+            status=400
+        )    
 class NearestPickupPointView(APIView):
     """
     Определяет ближайший пункт выдачи на основе геолокации пользователя
@@ -710,23 +727,3 @@ class UploadAvatarView(APIView):
 
         return Response(serializer.data)
 
-class MeView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request):
-        user = request.user
-
-        serializer = UserSerializer(
-            user,
-            data=request.data,
-            partial=True
-        )
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-
-        return Response(
-            serializer.errors,
-            status=400
-        )
