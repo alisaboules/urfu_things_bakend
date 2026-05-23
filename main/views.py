@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from firebase_admin import messaging
 from .utils import find_matches, get_nearest_pickup_point, calculate_distance
 from rest_framework.pagination import PageNumberPagination
 from .serializers import (
@@ -732,3 +733,13 @@ class UploadAvatarView(APIView):
 
         return Response(serializer.data)
 
+def send_push(token, title, body):
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title=title,
+            body=body,
+        ),
+        token=token,
+    )
+
+    messaging.send(message)

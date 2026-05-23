@@ -11,7 +11,9 @@ class UserSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'role', 'created_at', 'full_name', 'avatar']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'role', 'created_at', 'full_name', 'avatar',   "notifications_enabled",
+            "fcm_token"
+        ]
 
     def get_avatar(self, obj):
         if not obj.avatar:

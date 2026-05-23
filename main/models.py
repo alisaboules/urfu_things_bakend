@@ -21,7 +21,8 @@ class User(AbstractUser):
     upload_to='avatars/',
     blank=True,
     null=True
-)
+    )
+    fcm_token = models.TextField(null=True, blank=True)
     # Дополнительные поля
     phone = models.CharField(max_length=20, blank=True, null=True)
     group_number = models.CharField(max_length=20, blank=True, null=True)
