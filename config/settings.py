@@ -2,7 +2,11 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import dj_database_url
+import cloudinary
 
+cloudinary.config(
+    cloudinary_url=os.environ.get("CLOUDINARY_URL")
+)
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
@@ -25,6 +29,8 @@ INSTALLED_APPS = [
     
     # Наше приложение
     'main',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -136,3 +142,7 @@ AUTH_USER_MODEL = 'main.User'
 MEDIA_URL = '/media/'
 # MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
