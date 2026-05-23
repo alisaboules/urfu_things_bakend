@@ -22,6 +22,7 @@ class User(AbstractUser):
     blank=True,
     null=True
     )
+    student_id = models.CharField(max_length=50, blank=True, null=True)
     notifications_enabled = models.BooleanField(default=True)
     fcm_token = models.TextField(null=True, blank=True)
     # Дополнительные поля
