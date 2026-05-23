@@ -1,16 +1,15 @@
 import os
+import json
 import firebase_admin
-from firebase_admin import credentials, messaging
-from django.conf import settings
+from firebase_admin import credentials
+import firebase_admin.messaging as messaging
+firebase_json = os.environ.get("FIREBASE_CREDENTIALS")
 
-BASE_DIR = settings.BASE_DIR
+cred_dict = json.loads(firebase_json)
 
-cred_path = os.path.join(settings.BASE_DIR, "main", "firebase-key.json")
+cred = credentials.Certificate(cred_dict)
 
-cred = credentials.Certificate(cred_path)
-
-if not firebase_admin._apps:
-    firebase_admin.initialize_app(cred)
+firebase_admin.initialize_app(cred)
 
 def send_push(token, title, body):
     message = messaging.Message(
