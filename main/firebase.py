@@ -7,17 +7,22 @@ load_dotenv()
 
 firebase_json = os.environ.get("FIREBASE_CREDENTIALS")
 
-if not firebase_json:
-    raise Exception("FIREBASE_CREDENTIALS is missing")
+firebase_app = None
 
-try:
+if firebase_json:
+  try:
     cred_dict = json.loads(firebase_json)
-except json.JSONDecodeError as e:
-    raise Exception(f"Invalid FIREBASE_CREDENTIALS JSON: {e}")
+    if not firebase_admin._apps:
+            cred = credentials.Certificate(cred_dict)
+            firebase_app = firebase_admin.initialize_app(cred)
 
-if not firebase_admin._apps:
-    cred = credentials.Certificate(cred_dict)
-    firebase_admin.initialize_app(cred)
+            print("Firebase initialized")
+
+  except Exception as e:
+    print("Firebase init failed:", e)
+
+else:
+    print("Firebase disabled (no FIREBASE_CREDENTIALS)")
 
 
 def send_push(token, title, body):
