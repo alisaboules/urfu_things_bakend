@@ -8,3 +8,5 @@ Pillow==10.4.0
 gunicorn
 dj-database-url==2.2.0
 firebase-admin==6.0.0
+cloudinary
+django-cloudinary-storage
