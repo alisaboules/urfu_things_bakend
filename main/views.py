@@ -555,13 +555,19 @@ class MeView(APIView):
     def get(self, request):
         user = request.user
 
-        return Response({
-            "id": user.id,
-            "email": user.email,
-            "first_name": user.first_name,
-            "username": user.username,
-            "role": user.role if hasattr(user, "role") else None
-        })
+        serializer = UserSerializer(
+            request.user,
+            context={'request': request}
+        )
+
+        return Response(serializer.data)
+        # return Response({
+        #     "id": user.id,
+        #     "email": user.email,
+        #     "first_name": user.first_name,
+        #     "username": user.username,
+        #     "role": user.role if hasattr(user, "role") else None
+        # })
 
     def patch(self, request):
         user = request.user
@@ -569,7 +575,8 @@ class MeView(APIView):
         serializer = UserSerializer(
             user,
             data=request.data,
-            partial=True
+            partial=True,
+            context={'request': request}
         )
         if serializer.is_valid():
             serializer.save()
