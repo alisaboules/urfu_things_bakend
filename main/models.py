@@ -161,7 +161,7 @@ class FoundItem(models.Model):
         verbose_name_plural = 'Находки'
     
     def __str__(self):
-        return f"Найдено: {self.category.name if self.category else '?'} (ID: {self.found_id})"
+        return f"Найдено: {self.category.name if self.category else '?'} (ID: {self.id})"
 
 
 class LostItem(models.Model):
@@ -200,7 +200,7 @@ class LostItem(models.Model):
         verbose_name_plural = 'Пропажи'
     
     def __str__(self):
-        return f"Потеряно: {self.category.name if self.category else '?'} (ID: {self.lost_id})"
+        return f"Потеряно: {self.category.name if self.category else '?'} (ID: {self.id})"
 
 
 class Photo(models.Model):

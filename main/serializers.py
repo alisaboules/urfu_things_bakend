@@ -79,8 +79,7 @@ class PhotoSerializer(serializers.ModelSerializer):
 
 
 class FoundItemSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(required=False)
-
+    image = serializers.SerializerMethodField()
     class Meta:
         model = FoundItem
         fields = [
@@ -104,6 +103,11 @@ class FoundItemSerializer(serializers.ModelSerializer):
             data['image'] = instance.image.url
 
         return data
+    
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+        return obj.image.url
 
 # class FoundItemSerializer(serializers.ModelSerializer):
 #     category = serializers.PrimaryKeyRelatedField(
