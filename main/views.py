@@ -172,11 +172,11 @@ class MatchFoundItemsView(APIView):
             found_items = found_items.filter(category=lost_item.category)
         
         # Поиск по ключевым словам из заголовка и описания
-        keywords = f"{lost_item.title} {lost_item.description}".split()
+        keywords = f"{lost_item.description}".split()
         for keyword in keywords[:10]:  # берём первые 10 слов
             if len(keyword) > 3:  # игнорируем короткие слова
                 found_items = found_items.filter(
-                    Q(title__icontains=keyword) | Q(description__icontains=keyword)
+                    Q(description__icontains=keyword)
                 )
         
         # Добавляем процент совпадения
@@ -206,11 +206,11 @@ class MatchFoundItemsView(APIView):
         if lost_item.category == found_item.category:
             score += 40
         
-        # Совпадение в заголовке (20 баллов)
-        lost_title_words = set(lost_item.title.lower().split())
-        found_title_words = set(found_item.title.lower().split())
-        common_title = lost_title_words & found_title_words
-        score += min(20, len(common_title) * 5)
+        # # Совпадение в заголовке (20 баллов)
+        # lost_title_words = set(lost_item.title.lower().split())
+        # found_title_words = set(found_item.title.lower().split())
+        # common_title = lost_title_words & found_title_words
+        # score += min(20, len(common_title) * 5)
         
         # Совпадение в описании (20 баллов)
         lost_desc_words = set(lost_item.description.lower().split())
@@ -219,8 +219,8 @@ class MatchFoundItemsView(APIView):
         score += min(20, len(common_desc) * 2)
         
         # Бонус за совпадение местоположения (20 баллов)
-        lost_location = lost_item.location.lower()
-        found_location = found_item.location.lower()
+        lost_location = (lost_item.location_text or "").lower()
+        found_location = (found_item.location_ref or "").lower()
         if lost_location in found_location or found_location in lost_location:
             score += 20
         
@@ -228,34 +228,46 @@ class MatchFoundItemsView(APIView):
     
 def send_match_notification(lost_item, found_items):
     """Отправляет email владельцу пропажи о найденных совпадениях"""
-    if not lost_item.lost_by.email:
+
+    if not lost_item.user.email:
         return
-    
+
     matches_text = ""
+
     for item in found_items[:5]:
-        matches_text += f"\n- {item['found_item']['title']} (совпадение: {item['match_score']}%)\n"
-        matches_text += f"  Место: {item['found_item']['location']}\n"
-    
-    subject = f"Найдена похожая вещь: {lost_item.title}"
+        matches_text += (
+            f"\n- {item['found_item']['description'][:50]} "
+            f"(совпадение: {item['match_score']}%)\n"
+        )
+
+        matches_text += (
+            f"  Место: {item['found_item'].get('location_ref', 'Не указано')}\n"
+        )
+
+    subject = (
+        f"Найдена похожая вещь: "
+        f"{lost_item.category.name if lost_item.category else 'Предмет'}"
+    )
+
     message = f"""
-Здравствуйте, {lost_item.lost_by.username}!
+Здравствуйте, {lost_item.user.username}!
 
 Мы нашли похожие вещи, которые могут быть вашей пропажей:
 
 {matches_text}
 
-Пожалуйста, войдите в систему для получения более подробной информации:
-http://127.0.0.1:8000/api/lost/{lost_item.lost_id}/
+Подробнее:
+http://127.0.0.1:8000/api/lost/{lost_item.id}/
 
 С уважением,
 Команда UniFind
 """
-    
+
     send_mail(
         subject,
         message,
         settings.EMAIL_HOST_USER,
-        [lost_item.lost_by.email],
+        [lost_item.user.email],
         fail_silently=False,
     )
 
