@@ -57,10 +57,10 @@ def calculate_match_score(lost_item, found_item):
     if lost_item.category == found_item.category:
         score += 40
 
-    lost_title_words = set(lost_item.title.lower().split())
-    found_title_words = set(found_item.title.lower().split())
-    common_title = lost_title_words & found_title_words
-    score += min(20, len(common_title) * 5)
+    # lost_title_words = set(lost_item.title.lower().split())
+    # found_title_words = set(found_item.title.lower().split())
+    # common_title = lost_title_words & found_title_words
+    # score += min(20, len(common_title) * 5)
 
     lost_desc_words = set(lost_item.description.lower().split())
     found_desc_words = set(found_item.description.lower().split())
