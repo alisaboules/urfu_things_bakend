@@ -151,12 +151,25 @@ class LostItemSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = LostItem
         fields = ['id', 'user', 'user_username', 'category', 'category_name', 
                   'location_zone', 'location_text', 'description', 'status', 
                   'created_at', 'photos', 'image']
         read_only_fields = ['user', 'created_at']
+        
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+
+        request = self.context.get('request')
+
+        if request:
+            return request.build_absolute_uri(obj.image.url)
+
+        return obj.image.url
 
 
 class MatchSerializer(serializers.ModelSerializer):
