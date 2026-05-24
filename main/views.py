@@ -198,34 +198,36 @@ class MatchFoundItemsView(APIView):
             'matches': results[:10]  # топ-10 совпадений
         })
     
-    def calculate_match_score(self, lost_item, found_item):
-        # Рассчитывает процент совпадения между пропажей и находкой
-        score = 0
-        
-        # Совпадение категории (40 баллов)
-        if lost_item.category == found_item.category:
-            score += 40
-        
-        # # Совпадение в заголовке (20 баллов)
-        # lost_title_words = set(lost_item.title.lower().split())
-        # found_title_words = set(found_item.title.lower().split())
-        # common_title = lost_title_words & found_title_words
-        # score += min(20, len(common_title) * 5)
-        
-        # Совпадение в описании (20 баллов)
-        lost_desc_words = set(lost_item.description.lower().split())
-        found_desc_words = set(found_item.description.lower().split())
-        common_desc = lost_desc_words & found_desc_words
-        score += min(20, len(common_desc) * 2)
-        
-        # Бонус за совпадение местоположения (20 баллов)
-        lost_location = (lost_item.location_text or "").lower()
-        found_location = (found_item.location_ref or "").lower()
-        if lost_location in found_location or found_location in lost_location:
-            score += 20
-        
-        return min(100, score)  # максимум 100%
-    
+def calculate_match_score(self, lost_item, found_item):
+    score = 0
+
+    # Совпадение категории
+    if lost_item.category == found_item.category:
+        score += 40
+
+    # Совпадение описания
+    lost_desc_words = set((lost_item.description or "").lower().split())
+    found_desc_words = set((found_item.description or "").lower().split())
+
+    common_desc = lost_desc_words & found_desc_words
+    score += min(20, len(common_desc) * 2)
+
+    # Совпадение местоположения
+    lost_location = (lost_item.location_text or "").lower()
+    found_location = (found_item.location_ref or "").lower()
+
+    if (
+        lost_location
+        and found_location
+        and (
+            lost_location in found_location
+            or found_location in lost_location
+        )
+    ):
+        score += 20
+
+    return min(100, score)
+
 def send_match_notification(lost_item, found_items):
     """Отправляет email владельцу пропажи о найденных совпадениях"""
 
