@@ -79,7 +79,6 @@ class PhotoSerializer(serializers.ModelSerializer):
 
 
 class FoundItemSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
     class Meta:
         model = FoundItem
         fields = [
