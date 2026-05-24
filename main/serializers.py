@@ -179,7 +179,7 @@ class LostItemStatusUpdateSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=LostItem.STATUS_CHOICES)
 
 class IssuanceSerializer(serializers.ModelSerializer):
-    found_item_title = serializers.ReadOnlyField(source='found_item.title')
+    found_item_title = serializers.ReadOnlyField(source='found_item.description')
     pickup_point_name = serializers.ReadOnlyField(source='pickup_point.name')
     user_username = serializers.ReadOnlyField(source='user.username')
     
