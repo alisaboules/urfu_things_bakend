@@ -150,7 +150,6 @@ class LostItemSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True
     )
-    image = serializers.SerializerMethodField()
 
     class Meta:
         model = LostItem
