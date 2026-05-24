@@ -79,6 +79,7 @@ class PhotoSerializer(serializers.ModelSerializer):
 
 
 class FoundItemSerializer(serializers.ModelSerializer):
+    category = serializers.CharField()
     class Meta:
         model = FoundItem
         fields = [
@@ -108,49 +109,17 @@ class FoundItemSerializer(serializers.ModelSerializer):
             return None
         return obj.image.url
 
-# class FoundItemSerializer(serializers.ModelSerializer):
-#     category = serializers.PrimaryKeyRelatedField(
-#         queryset=Category.objects.all(),
-#         required=False,
-#         allow_null=True,
-#         default=None
-#     )
-
-#     pickup_point = serializers.PrimaryKeyRelatedField(
-#         queryset=PickupPoint.objects.all(),
-#         required=False,
-#         allow_null=True,
-#         default=None
-#     )
-#     image = serializers.SerializerMethodField()
-
-
-#     class Meta:
-#         model = FoundItem
-#         fields = [
-#             'id', 'user',
-#             'category', 'pickup_point',
-#             'location_type', 'location_ref',
-#             'description', 'status', 'created_at', 'image'
-#         ]
-#         read_only_fields = ['user', 'created_at']
-
-#     def get_image(self, obj):
-#         if not obj.image:
-#             return None
-
-#         return obj.image.url
 
 class LostItemSerializer(serializers.ModelSerializer):
     user_username = serializers.ReadOnlyField(source='user.username')
     category_name = serializers.ReadOnlyField(source='category.name')
     photos = PhotoSerializer(many=True, read_only=True)
-    category = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(),
-        required=False,
-        allow_null=True
-    )
-
+    # category = serializers.PrimaryKeyRelatedField(
+    #     queryset=Category.objects.all(),
+    #     required=False,
+    #     allow_null=True
+    # )
+    category = serializers.CharField()
     class Meta:
         model = LostItem
         fields = ['id', 'user', 'user_username', 'category', 'category_name', 

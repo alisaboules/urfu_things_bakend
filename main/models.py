@@ -110,12 +110,13 @@ class PickupPoint(models.Model):
         return self.name
 
 class FoundItem(models.Model):
-    category = models.ForeignKey(
-    Category,
-    on_delete=models.RESTRICT,
-    null=True,
-    blank=True
-)
+    # category = models.ForeignKey(
+    # Category,
+    # on_delete=models.RESTRICT,
+    # null=True,
+    # blank=True
+    category = models.CharField(max_length=100)
+
 
     pickup_point = models.ForeignKey(
     PickupPoint,
@@ -170,13 +171,13 @@ class LostItem(models.Model):
     blank=True,
     null=True
 )
-    category = models.ForeignKey(
-    Category,
-    on_delete=models.RESTRICT,
-    db_column='category_id',
-    null=True,
-    blank=True
-)
+    # category = models.ForeignKey(
+    # Category,
+    # on_delete=models.RESTRICT,
+    # db_column='category_id',
+    # null=True,
+    # blank=True
+    category = models.CharField(max_length=100, blank=True, null=True)
 
 
     """Пропажи"""
