@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Category, Log, PickupPoint, FoundItem, LostItem, User
 from django.db.models import Q
 from django.core.mail import send_mail
@@ -57,7 +58,7 @@ class FoundItemListCreateAPIView(generics.ListCreateAPIView):
     queryset = FoundItem.objects.all().order_by('-created_at')
     serializer_class = FoundItemSerializer
     pagination_class = PageNumberPagination
-    
+    parser_classes = [MultiPartParser, FormParser]
     def get_permissions(self):
         if self.request.method == 'POST':
             return [permissions.IsAuthenticated()]
@@ -93,7 +94,8 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
     queryset = LostItem.objects.all().order_by('-created_at')
     serializer_class = LostItemSerializer
     pagination_class = PageNumberPagination
-    
+    parser_classes = [MultiPartParser, FormParser]
+
     def get_permissions(self):
         if self.request.method == 'POST':
             return [permissions.IsAuthenticated()]
