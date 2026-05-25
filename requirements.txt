@@ -10,3 +10,4 @@ dj-database-url==2.2.0
 firebase-admin==6.0.0
 cloudinary
 django-cloudinary-storage
+django-filter
