@@ -63,13 +63,14 @@ class FoundItemListCreateAPIView(generics.ListCreateAPIView):
     parser_classes = [MultiPartParser, FormParser]
     filter_backends = [DjangoFilterBackend, drf_filters.SearchFilter, drf_filters.OrderingFilter]
     # Поля для точной фильтрации
+    
     filterset_fields = {
-        'status': ['exact'],
-        'category': ['exact'],
-        'pickup_point': ['exact'],
-        'location_text': ['icontains'],
-        'location_zone': ['icontains'],
+    'status': ['exact'],
+    'category': ['exact'],
+    'pickup_point': ['exact'],
+    'location_ref': ['icontains'],
     }
+    
     
     # Поля для поиска
     search_fields = ['title', 'description']
