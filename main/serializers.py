@@ -79,7 +79,9 @@ class PhotoSerializer(serializers.ModelSerializer):
 
 
 class FoundItemSerializer(serializers.ModelSerializer):
-    category = serializers.CharField()
+    category = serializers.PrimaryKeyRelatedField(
+    queryset=Category.objects.all()
+)
     class Meta:
         model = FoundItem
         fields = [
