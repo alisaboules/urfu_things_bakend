@@ -115,7 +115,7 @@ class FoundItem(models.Model):
     # on_delete=models.RESTRICT,
     # null=True,
     # blank=True
-    category = models.CharField(max_length=100)
+    category = models.CharField(max_length=100, blank=True, null=True, default="кошельки")
 
 
     pickup_point = models.ForeignKey(
@@ -162,7 +162,7 @@ class FoundItem(models.Model):
         verbose_name_plural = 'Находки'
     
     def __str__(self):
-        return f"Найдено: {self.category.name if self.category else '?'} (ID: {self.id})"
+        return f"Найдено: {self.category or '?'} (ID: {self.id})"
 
 
 class LostItem(models.Model):
@@ -177,7 +177,7 @@ class LostItem(models.Model):
     # db_column='category_id',
     # null=True,
     # blank=True
-    category = models.CharField(max_length=100, blank=True, null=True)
+    category = models.CharField(max_length=100, blank=True, null=True, default="кошельки")
 
 
     """Пропажи"""
@@ -201,7 +201,7 @@ class LostItem(models.Model):
         verbose_name_plural = 'Пропажи'
     
     def __str__(self):
-        return f"Потеряно: {self.category.name if self.category else '?'} (ID: {self.id})"
+        return f"Потеряно: {self.category or '?'} (ID: {self.id})"
 
 
 class Photo(models.Model):
