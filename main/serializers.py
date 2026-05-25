@@ -121,7 +121,9 @@ class LostItemSerializer(serializers.ModelSerializer):
     #     required=False,
     #     allow_null=True
     # )
-    category = serializers.CharField()
+    category = serializers.PrimaryKeyRelatedField(
+    queryset=Category.objects.all()
+)
     class Meta:
         model = LostItem
         fields = ['id', 'user', 'user_username', 'category', 'category_name', 
