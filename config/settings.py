@@ -19,6 +19,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
+    'django_filters',
+
     # Дополнительные пакеты
     'rest_framework',
     'rest_framework_simplejwt',
