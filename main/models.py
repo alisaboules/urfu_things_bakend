@@ -110,12 +110,12 @@ class PickupPoint(models.Model):
         return self.name
 
 class FoundItem(models.Model):
-    # category = models.ForeignKey(
-    # Category,
-    # on_delete=models.RESTRICT,
-    # null=True,
-    # blank=True
-    category = models.CharField(max_length=100, blank=True, null=True, default="кошельки")
+    category = models.ForeignKey(
+    Category,
+    on_delete=models.RESTRICT,
+    null=True,
+    blank=True)
+    # category = models.CharField(max_length=100, blank=True, null=True, default="кошельки")
 
 
     pickup_point = models.ForeignKey(
@@ -147,7 +147,7 @@ class FoundItem(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id', related_name='found_items')
-    # category = models.ForeignKey(Category, on_delete=models.RESTRICT, db_column='category_id')
+    category = models.ForeignKey(Category, on_delete=models.RESTRICT, db_column='category_id')
     # pickup_point = models.ForeignKey(PickupPoint, on_delete=models.RESTRICT, db_column='pickup_point_id')
     location_type = models.CharField(max_length=20, choices=LOCATION_TYPE_CHOICES, blank=True, null=True)
     location_ref = models.CharField(max_length=100, blank=True, null=True)
@@ -171,13 +171,13 @@ class LostItem(models.Model):
     blank=True,
     null=True
 )
-    # category = models.ForeignKey(
-    # Category,
-    # on_delete=models.RESTRICT,
-    # db_column='category_id',
-    # null=True,
-    # blank=True
-    category = models.CharField(max_length=100, blank=True, null=True, default="кошельки")
+    category = models.ForeignKey(
+    Category,
+    on_delete=models.RESTRICT,
+    db_column='category_id',
+    null=True,
+    blank=True)
+    # category = models.CharField(max_length=100, blank=True, null=True, default="кошельки")
 
 
     """Пропажи"""
