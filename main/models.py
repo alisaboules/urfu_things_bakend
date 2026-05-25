@@ -292,3 +292,30 @@ class Log(models.Model):
     
     def __str__(self):
         return f"{self.created_at} - {self.user} - {self.action_type}"
+
+class Appeal(models.Model):
+    """Обращение в администрацию"""
+    STATUS_CHOICES = [
+        ('open', 'Открыто'),
+        ('processing', 'В обработке'),
+        ('closed', 'Закрыто'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='appeals')
+    found_item = models.ForeignKey(FoundItem, on_delete=models.CASCADE, null=True, blank=True, related_name='appeals')
+    lost_item = models.ForeignKey(LostItem, on_delete=models.CASCADE, null=True, blank=True, related_name='appeals')
+    subject = models.CharField(max_length=200, verbose_name='Тема')
+    message = models.TextField(verbose_name='Сообщение')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open', verbose_name='Статус')
+    admin_comment = models.TextField(blank=True, null=True, verbose_name='Ответ администратора')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
+    
+    class Meta:
+        db_table = 'appeal'
+        verbose_name = 'Обращение'
+        verbose_name_plural = 'Обращения'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.subject} - {self.user.username}"

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import (
     User, Category, PickupPoint, FoundItem, LostItem, 
-    Building, Photo, Match, Issuance, Log
+    Building, Photo, Match, Issuance, Log, Appeal
 )
 
 
@@ -196,3 +196,45 @@ class PickupPointWithDistanceSerializer(PickupPointSerializer):
     
     class Meta(PickupPointSerializer.Meta):
         fields = PickupPointSerializer.Meta.fields + ['distance_km', 'latitude', 'longitude', 'address']
+
+class MyItemStatusSerializer(serializers.Serializer):
+    """Сериализатор для статусов объявлений пользователя"""
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    type = serializers.CharField()  # 'found' или 'lost'
+    status = serializers.CharField()
+    status_display = serializers.CharField()
+    category_name = serializers.CharField()
+    location = serializers.CharField()
+    created_at = serializers.DateTimeField()
+    photo_url = serializers.URLField(allow_null=True)
+
+class AppealSerializer(serializers.ModelSerializer):
+    username = serializers.ReadOnlyField(source='user.username')
+    found_item_title = serializers.ReadOnlyField(source='found_item.title', allow_null=True)
+    lost_item_title = serializers.ReadOnlyField(source='lost_item.title', allow_null=True)
+    
+    class Meta:
+        model = Appeal
+        fields = ['id', 'user', 'username', 'found_item', 'found_item_title', 
+                  'lost_item', 'lost_item_title', 'subject', 'message', 
+                  'status', 'admin_comment', 'created_at', 'updated_at']
+        read_only_fields = ['user', 'created_at', 'updated_at']
+
+
+class AppealCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Appeal
+        fields = ['found_item', 'lost_item', 'subject', 'message']
+    
+    def validate(self, data):
+        if not data.get('found_item') and not data.get('lost_item'):
+            raise serializers.ValidationError("Укажите либо находку, либо пропажу")
+        return data
+
+
+class AppealUpdateSerializer(serializers.ModelSerializer):
+    """Для администратора: обновление статуса и ответа"""
+    class Meta:
+        model = Appeal
+        fields = ['status', 'admin_comment']

@@ -4,7 +4,9 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser, FormParser
-from .models import Category, Log, PickupPoint, FoundItem, LostItem, User
+from django_filters.rest_framework import DjangoFilterBackend # type: ignore
+from rest_framework import filters as drf_filters
+from .models import Appeal, Category, Log, PickupPoint, FoundItem, LostItem, User
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
@@ -16,7 +18,7 @@ from firebase_admin import messaging
 from .utils import find_matches, get_nearest_pickup_point, calculate_distance
 from rest_framework.pagination import PageNumberPagination
 from .serializers import (
-    CategorySerializer, LogSerializer, PickupPointSerializer, 
+    AppealCreateSerializer, AppealSerializer, AppealUpdateSerializer, CategorySerializer, LogSerializer, PickupPointSerializer, 
     FoundItemSerializer, LostItemSerializer, 
     RegisterSerializer, UserSerializer, FoundItemStatusUpdateSerializer,
     LostItemStatusUpdateSerializer, NearestPickupPointSerializer
@@ -59,6 +61,22 @@ class FoundItemListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = FoundItemSerializer
     pagination_class = PageNumberPagination
     parser_classes = [MultiPartParser, FormParser]
+    filter_backends = [DjangoFilterBackend, drf_filters.SearchFilter, drf_filters.OrderingFilter]
+    # Поля для точной фильтрации
+    filterset_fields = {
+        'status': ['exact'],
+        'category': ['exact'],
+        'pickup_point': ['exact'],
+        'location': ['icontains'],
+    }
+    
+    # Поля для поиска
+    search_fields = ['title', 'description']
+    
+    # Поля для сортировки
+    ordering_fields = ['created_at', 'title', 'status']
+    ordering = ['-created_at']  # Сортировка по умолчанию
+    
     def get_permissions(self):
         if self.request.method == 'POST':
             return [permissions.IsAuthenticated()]
@@ -95,7 +113,22 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = LostItemSerializer
     pagination_class = PageNumberPagination
     parser_classes = [MultiPartParser, FormParser]
-
+    filter_backends = [DjangoFilterBackend, drf_filters.SearchFilter, drf_filters.OrderingFilter]
+    
+    # Поля для точной фильтрации
+    filterset_fields = {
+        'status': ['exact'],
+        'category': ['exact'],
+        'location': ['icontains'],
+    }
+    
+    # Поля для поиска
+    search_fields = ['title', 'description']
+    
+    # Поля для сортировки
+    ordering_fields = ['created_at', 'title', 'status']
+    ordering = ['-created_at']
+    
     def get_permissions(self):
         if self.request.method == 'POST':
             return [permissions.IsAuthenticated()]
@@ -759,3 +792,125 @@ def send_push(token, title, body):
     )
 
     messaging.send(message)
+
+
+class MyItemsStatusView(APIView):
+    """Получение статусов всех объявлений пользователя"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        found_items = FoundItem.objects.filter(found_by=request.user).order_by('-created_at')
+        lost_items = LostItem.objects.filter(lost_by=request.user).order_by('-created_at')
+        
+        result = []
+        
+        # Добавляем находки
+        for item in found_items:
+            result.append({
+                'id': item.id,
+                'title': item.title,
+                'type': 'found',
+                'type_display': 'Находка',
+                'status': item.status,
+                'status_display': item.get_status_display(),
+                'category_name': item.category.name if item.category else None,
+                'location': item.location,
+                'created_at': item.created_at,
+                'photo_url': item.photo.url if item.photo else None,
+            })
+        
+        # Добавляем пропажи
+        for item in lost_items:
+            result.append({
+                'id': item.id,
+                'title': item.title,
+                'type': 'lost',
+                'type_display': 'Пропажа',
+                'status': item.status,
+                'status_display': item.get_status_display(),
+                'category_name': item.category.name if item.category else None,
+                'location': item.location,
+                'created_at': item.created_at,
+                'photo_url': item.photo.url if item.photo else None,
+            })
+        
+        # Сортируем по дате создания (новые сверху)
+        result.sort(key=lambda x: x['created_at'], reverse=True)
+        
+        # Статистика по статусам
+        stats = {
+            'total': len(result),
+            'found_active': FoundItem.objects.filter(found_by=request.user, status='active').count(),
+            'found_issued': FoundItem.objects.filter(found_by=request.user, status='issued').count(),
+            'found_closed': FoundItem.objects.filter(found_by=request.user, status='closed').count(),
+            'lost_active': LostItem.objects.filter(lost_by=request.user, status='active').count(),
+            'lost_matched': LostItem.objects.filter(lost_by=request.user, status='matched').count(),
+            'lost_closed': LostItem.objects.filter(lost_by=request.user, status='closed').count(),
+        }
+        
+        return Response({
+            'items': result,
+            'stats': stats
+        })
+
+
+class MyFoundItemsView(generics.ListAPIView):
+    """Мои находки"""
+    serializer_class = FoundItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return FoundItem.objects.filter(found_by=self.request.user).order_by('-created_at')
+
+
+class MyLostItemsView(generics.ListAPIView):
+    """Мои пропажи"""
+    serializer_class = LostItemSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return LostItem.objects.filter(lost_by=self.request.user).order_by('-created_at')
+    
+class AppealListView(generics.ListAPIView):
+    """Просмотр обращений (свои для студента, все для админа)"""
+    serializer_class = AppealSerializer
+    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.IsAuthenticated()]
+        return [permissions.IsAuthenticated()]
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or getattr(user, 'role', '') == 'admin':
+            return Appeal.objects.all()
+        return Appeal.objects.filter(user=user)
+
+
+class AppealCreateView(generics.CreateAPIView):
+    """Создание обращения"""
+    serializer_class = AppealCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class AppealDetailView(generics.RetrieveUpdateAPIView):
+    """Просмотр и обновление обращения"""
+    queryset = Appeal.objects.all()
+    serializer_class = AppealSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_serializer_class(self):
+        user = self.request.user
+        is_admin = user.is_superuser or getattr(user, 'role', '') == 'admin'
+        
+        if self.request.method == 'PATCH' and is_admin:
+            return AppealUpdateSerializer
+        return AppealSerializer
+    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [permissions.IsAuthenticated()]
+        return [IsAdmin()]

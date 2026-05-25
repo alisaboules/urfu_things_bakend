@@ -41,7 +41,17 @@ urlpatterns = [
     # Логи
     path('logs/', views.LogListView.as_view(), name='log-list'),
     path('logs/<int:pk>/', views.LogDetailView.as_view(), name='log-detail'),
-   
+    
+    # Мои объявления и статусы
+    path('my/status/', views.MyItemsStatusView.as_view(), name='my-status'),
+    path('my/found/', views.MyFoundItemsView.as_view(), name='my-found'),
+    path('my/lost/', views.MyLostItemsView.as_view(), name='my-lost'),
+
+    # Обращения в администрацию
+    path('appeals/', views.AppealListView.as_view(), name='appeal-list'),
+    path('appeals/create/', views.AppealCreateView.as_view(), name='appeal-create'),
+    path('appeals/<int:pk>/', views.AppealDetailView.as_view(), name='appeal-detail'),
+    
     # Геолокация и пункты выдачи
     path('pickup-points/nearby/', views.NearestPickupPointView.as_view(), name='nearest-pickup-point'),
     path('pickup-points/suggest/', views.AutoSuggestPickupPointView.as_view(), name='suggest-pickup-point'),
