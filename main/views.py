@@ -67,7 +67,8 @@ class FoundItemListCreateAPIView(generics.ListCreateAPIView):
         'status': ['exact'],
         'category': ['exact'],
         'pickup_point': ['exact'],
-        'location': ['icontains'],
+        'location_text': ['icontains'],
+        'location_zone': ['icontains'],
     }
     
     # Поля для поиска
@@ -119,7 +120,8 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
     filterset_fields = {
         'status': ['exact'],
         'category': ['exact'],
-        'location': ['icontains'],
+        'location_text': ['icontains'],
+        'location_zone': ['icontains'],
     }
     
     # Поля для поиска
@@ -799,8 +801,8 @@ class MyItemsStatusView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def get(self, request):
-        found_items = FoundItem.objects.filter(found_by=request.user).order_by('-created_at')
-        lost_items = LostItem.objects.filter(lost_by=request.user).order_by('-created_at')
+        found_items = FoundItem.objects.filter(user=request.user).order_by('-created_at')
+        lost_items = LostItem.objects.filter(user=request.user).order_by('-created_at')
         
         result = []
         
@@ -816,7 +818,7 @@ class MyItemsStatusView(APIView):
                 'category_name': item.category.name if item.category else None,
                 'location': item.location,
                 'created_at': item.created_at,
-                'photo_url': item.photo.url if item.photo else None,
+                'photo_url': item.image.url if item.image else None,
             })
         
         # Добавляем пропажи

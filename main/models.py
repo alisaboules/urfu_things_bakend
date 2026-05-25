@@ -117,6 +117,11 @@ class FoundItem(models.Model):
     blank=True)
     # category = models.CharField(max_length=100, blank=True, null=True, default="кошельки")
 
+    title = models.CharField(
+    max_length=255,
+    blank=True,
+    null=True
+    )
 
     pickup_point = models.ForeignKey(
     PickupPoint,
@@ -124,12 +129,6 @@ class FoundItem(models.Model):
     null=True,
     blank=True
 )
-#     image = models.ImageField(
-#     upload_to='items/',
-#     blank=True,
-#     null=True
-# )
-
 
     """Находки"""
     LOCATION_TYPE_CHOICES = [
@@ -147,7 +146,7 @@ class FoundItem(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id', related_name='found_items')
-    category = models.ForeignKey(Category, on_delete=models.RESTRICT, db_column='category_id')
+    # category = models.ForeignKey(Category, on_delete=models.RESTRICT, db_column='category_id')
     # pickup_point = models.ForeignKey(PickupPoint, on_delete=models.RESTRICT, db_column='pickup_point_id')
     location_type = models.CharField(max_length=20, choices=LOCATION_TYPE_CHOICES, blank=True, null=True)
     location_ref = models.CharField(max_length=100, blank=True, null=True)
@@ -155,7 +154,7 @@ class FoundItem(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
     image = models.ImageField(upload_to='found_items/', null=True, blank=True)
-
+    # title = models.CharField(max_length=200)
     class Meta:
         db_table = 'found_item'
         verbose_name = 'Находка'
@@ -166,6 +165,7 @@ class FoundItem(models.Model):
 
 
 class LostItem(models.Model):
+    # title = models.CharField(max_length=200)
     image = models.ImageField(
     upload_to='items/',
     blank=True,
@@ -178,7 +178,11 @@ class LostItem(models.Model):
     null=True,
     blank=True)
     # category = models.CharField(max_length=100, blank=True, null=True, default="кошельки")
-
+    title = models.CharField(
+    max_length=255,
+    blank=True,
+    null=True
+)
 
     """Пропажи"""
     STATUS_CHOICES = [
