@@ -79,6 +79,7 @@ class PhotoSerializer(serializers.ModelSerializer):
 
 
 class FoundItemSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(source='user.first_name', read_only=True)
     category = serializers.PrimaryKeyRelatedField(
     queryset=Category.objects.all()
 )
@@ -113,6 +114,7 @@ class FoundItemSerializer(serializers.ModelSerializer):
 
 
 class LostItemSerializer(serializers.ModelSerializer):
+    author = serializers.CharField(source='user.first_name', read_only=True)
     user_username = serializers.ReadOnlyField(source='user.username')
     category_name = serializers.ReadOnlyField(source='category.name')
     photos = PhotoSerializer(many=True, read_only=True)
