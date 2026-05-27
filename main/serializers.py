@@ -96,6 +96,7 @@ class FoundItemSerializer(serializers.ModelSerializer):
             'status',
             'created_at',
             'image',
+            'author'
         ]
         read_only_fields = ['user', 'created_at']
 
@@ -130,7 +131,7 @@ class LostItemSerializer(serializers.ModelSerializer):
         model = LostItem
         fields = ['id', 'user', 'user_username', 'category', 'category_name', 
                   'location_zone', 'location_text', 'description', 'status', 
-                  'created_at', 'photos', 'image']
+                  'created_at', 'photos', 'image', 'author']
         read_only_fields = ['user', 'created_at']
         
     def get_image(self, obj):
