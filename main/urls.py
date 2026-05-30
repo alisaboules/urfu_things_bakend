@@ -55,4 +55,8 @@ urlpatterns = [
     # Геолокация и пункты выдачи
     path('pickup-points/nearby/', views.NearestPickupPointView.as_view(), name='nearest-pickup-point'),
     path('pickup-points/suggest/', views.AutoSuggestPickupPointView.as_view(), name='suggest-pickup-point'),
+
+    path('match/<int:lost_item_id>/', views.MatchFoundItemsView.as_view(), name='match'),
+    path('match/closed/<int:lost_item_id>/', views.MatchClosedItemsView.as_view(), name='match-closed'),
+    path('match/hot/<int:lost_item_id>/', views.HotMatchView.as_view(), name='match-hot'),
 ]

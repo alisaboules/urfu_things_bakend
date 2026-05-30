@@ -15,6 +15,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from firebase_admin import messaging
+from datetime import timedelta
+from django.utils import timezone
 from .utils import find_matches, get_nearest_pickup_point, calculate_distance
 from rest_framework.pagination import PageNumberPagination
 from .serializers import (
@@ -110,19 +112,59 @@ class FoundItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIVie
         instance.delete()
 
 # Пропажи
+# class LostItemListCreateAPIView(generics.ListCreateAPIView):
+#     queryset = LostItem.objects.all().order_by('-created_at')
+#     serializer_class = LostItemSerializer
+#     pagination_class = PageNumberPagination
+#     parser_classes = [MultiPartParser, FormParser]
+#     filter_backends = [DjangoFilterBackend, drf_filters.SearchFilter, drf_filters.OrderingFilter]
+    
+#     # Поля для точной фильтрации
+#     filterset_fields = {
+#         'status': ['exact'],
+#         'category': ['exact'],
+#         'location_text': ['icontains'],
+#         'location_zone': ['icontains'],
+#     }
+    
+#     # Поля для поиска
+#     search_fields = ['title', 'description']
+    
+#     # Поля для сортировки
+#     ordering_fields = ['created_at', 'title', 'status']
+#     ordering = ['-created_at']
+    
+#     def get_permissions(self):
+#         if self.request.method == 'POST':
+#             return [permissions.IsAuthenticated()]
+#         return [permissions.AllowAny()]
+
+#     def get_serializer_context(self):
+#         context = super().get_serializer_context()
+#         context.update({"request": self.request})
+#         return context    
+    
+#     def perform_create(self, serializer):
+#         lost_item = serializer.save(user=self.request.user)
+
+#         # ищем совпадения
+#         matches = find_matches(lost_item)
+
+#         # если есть совпадения → отправляем уведомление
+#         if matches:
+#             send_match_notification(lost_item, matches)
+
 class LostItemListCreateAPIView(generics.ListCreateAPIView):
     queryset = LostItem.objects.all().order_by('-created_at')
     serializer_class = LostItemSerializer
     pagination_class = PageNumberPagination
-    parser_classes = [MultiPartParser, FormParser]
     filter_backends = [DjangoFilterBackend, drf_filters.SearchFilter, drf_filters.OrderingFilter]
     
     # Поля для точной фильтрации
     filterset_fields = {
         'status': ['exact'],
         'category': ['exact'],
-        'location_text': ['icontains'],
-        'location_zone': ['icontains'],
+        'location': ['icontains'],
     }
     
     # Поля для поиска
@@ -142,38 +184,146 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
         context.update({"request": self.request})
         return context
     
-    # def perform_create(self, serializer):
-    #     lost_item = serializer.save(lost_by=self.request.user)
-    
-    #     # Поиск совпадений и отправка уведомлений
-    #     from .views import MatchFoundItemsView
-    #     match_view = MatchFoundItemsView()
-    #     matches = find_matches(lost_item)
     def perform_create(self, serializer):
-        lost_item = serializer.save(user=self.request.user)
+        lost_item = serializer.save(lost_by=self.request.user)
+        
+        match_view = MatchFoundItemsView()
+        
+        # Ищем активные находки
+        found_items = FoundItem.objects.filter(status='active')
+        
+        if lost_item.category:
+            found_items = found_items.filter(category=lost_item.category)
+        
+        # Поиск по ключевым словам
+        keywords = f"{lost_item.title} {lost_item.description}".split()
+        for keyword in keywords[:10]:
+            if len(keyword) > 3:
+                found_items = found_items.filter(
+                    Q(title__icontains=keyword) | Q(description__icontains=keyword)
+                )
+        
+        # Рассчитываем совпадения
+        results = []
+        for found in found_items[:20]:
+            score = match_view.calculate_match_score(lost_item, found)
+            if score > 20:
+                results.append({
+                    'found_item': {
+                        'id': found.id,
+                        'title': found.title,
+                        'location': found.location
+                    },
+                    'match_score': score
+                })
+        
+        results.sort(key=lambda x: x['match_score'], reverse=True)
+        
+        if results:
+            send_match_notification(lost_item, results[:10])
+        
+        '''
+        # 2. Проверка горячих совпадений (если найдено совпадение >70%)
+        hot_view = HotMatchView()
+        hot_response = hot_view.get(mock_request, lost_item_id=lost_item.id)
+        
+        if hot_response.status_code == 200 and hot_response.data.get('matches'):
+            top_match = hot_response.data['matches'][0]
+            if top_match['match_score'] > 70:
+                # Отправляем срочное уведомление
+                send_urgent_match_notification(lost_item, top_match) '''
 
-        # ищем совпадения
-        matches = find_matches(lost_item)
 
-        # если есть совпадения → отправляем уведомление
-        if matches:
-            send_match_notification(lost_item, matches)
-
-# if matches:
-#     send_match_notification(lost_item, matches)
-
-#         # Создаём имитацию запроса для поиска совпадений
-#         # import json
-#         # from django.test import RequestFactory
+# class LostItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+#     # Просмотр, обновление и удаление пропажи
+#     queryset = LostItem.objects.all()
+#     serializer_class = LostItemSerializer
+#     permission_classes = [permissions.IsAuthenticatedOrReadOnly, CanManageLostItem]
     
-#         # factory = RequestFactory()
-#         # mock_request = factory.get(f'/api/match/{lost_item.lost_id}/')
-#         # mock_request.user = self.request.user
+#     def get_permissions(self):
+#         if self.request.method == 'GET':
+#             return [permissions.AllowAny()]
+#         return [permissions.IsAuthenticated(), CanManageLostItem()]
     
-#         response = match_view.get(mock_request, lost_item_id=lost_item.lost_id)
+#     def perform_update(self, serializer):
+#         serializer.save()
     
-#         if response.status_code == 200 and response.data.get('matches'):
-#             send_match_notification(lost_item, response.data['matches'])
+#     def perform_destroy(self, instance):
+#         instance.delete()
+
+# # Найти похожие находки для указанной пропажи
+# class MatchFoundItemsView(APIView):
+#     permission_classes = [permissions.IsAuthenticated]
+    
+#     def get(self, request, lost_item_id):
+#         try:
+#             lost_item = LostItem.objects.get(id=lost_item_id)
+#         except LostItem.DoesNotExist:
+#             return Response({'error': 'Пропажа не найдена'}, status=404)
+        
+#         # Базовый запрос: активные находки
+#         found_items = FoundItem.objects.filter(status='active')
+        
+#         # Фильтр по категории (если указана)
+#         if lost_item.category:
+#             found_items = found_items.filter(category=lost_item.category)
+        
+#         # Поиск по ключевым словам из заголовка и описания
+#         keywords = f"{lost_item.description}".split()
+#         for keyword in keywords[:10]:  # берём первые 10 слов
+#             if len(keyword) > 3:  # игнорируем короткие слова
+#                 found_items = found_items.filter(
+#                     Q(description__icontains=keyword)
+#                 )
+        
+#         # Добавляем процент совпадения
+#         results = []
+#         for found in found_items[:20]:  # максимум 20 результатов
+#             score = self.calculate_match_score(lost_item, found)
+#             if score > 20:  # порог совпадения
+#                 serializer = FoundItemSerializer(found)
+#                 results.append({
+#                     'found_item': serializer.data,
+#                     'match_score': score
+#                 })
+        
+#         # Сортируем по убыванию совпадения
+#         results.sort(key=lambda x: x['match_score'], reverse=True)
+        
+#         return Response({
+#             'lost_item_id': lost_item_id,
+#             'matches': results[:10]  # топ-10 совпадений
+#         })
+    
+# def calculate_match_score(self, lost_item, found_item):
+#     score = 0
+
+#     # Совпадение категории
+#     if lost_item.category == found_item.category:
+#         score += 40
+
+#     # Совпадение описания
+#     lost_desc_words = set((lost_item.description or "").lower().split())
+#     found_desc_words = set((found_item.description or "").lower().split())
+
+#     common_desc = lost_desc_words & found_desc_words
+#     score += min(20, len(common_desc) * 2)
+
+#     # Совпадение местоположения
+#     lost_location = (lost_item.location_text or "").lower()
+#     found_location = (found_item.location_ref or "").lower()
+
+#     if (
+#         lost_location
+#         and found_location
+#         and (
+#             lost_location in found_location
+#             or found_location in lost_location
+#         )
+#     ):
+#         score += 20
+
+#     return min(100, score)
 
 class LostItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     # Просмотр, обновление и удаление пропажи
@@ -210,11 +360,11 @@ class MatchFoundItemsView(APIView):
             found_items = found_items.filter(category=lost_item.category)
         
         # Поиск по ключевым словам из заголовка и описания
-        keywords = f"{lost_item.description}".split()
+        keywords = f"{lost_item.title} {lost_item.description}".split()
         for keyword in keywords[:10]:  # берём первые 10 слов
             if len(keyword) > 3:  # игнорируем короткие слова
                 found_items = found_items.filter(
-                    Q(description__icontains=keyword)
+                    Q(title__icontains=keyword) | Q(description__icontains=keyword)
                 )
         
         # Добавляем процент совпадения
@@ -236,35 +386,215 @@ class MatchFoundItemsView(APIView):
             'matches': results[:10]  # топ-10 совпадений
         })
     
-def calculate_match_score(self, lost_item, found_item):
-    score = 0
+    def calculate_match_score(self, lost_item, found_item):
+        """Рассчитывает процент совпадения между пропажей и находкой"""
+        score = 0
+    
+        # Совпадение категории (30 баллов)
+        if lost_item.category == found_item.category:
+            score += 30
+    
+        # Совпадение в заголовке (15 баллов)
+        lost_title_words = set(lost_item.title.lower().split())
+        found_title_words = set(found_item.title.lower().split())
+        common_title = lost_title_words & found_title_words
+        score += min(15, len(common_title) * 4)
+    
+        # Совпадение в описании (15 баллов)
+        lost_desc_words = set(lost_item.description.lower().split())
+        found_desc_words = set(found_item.description.lower().split())
+        common_desc = lost_desc_words & found_desc_words
+        score += min(15, len(common_desc) * 2)
+    
+        # Совпадение местоположения (15 баллов)
+        lost_location = lost_item.location.lower()
+        found_location = found_item.location.lower()
+        if lost_location in found_location or found_location in lost_location:
+            score += 15
+    
+        # НОВОЕ: Совпадение по дате (15 баллов)
+        date_score = self.calculate_date_match_score(lost_item.created_at, found_item.created_at)
+        score += date_score
+    
+        # НОВОЕ: Проверка, не выдана ли уже вещь (штраф -20 баллов)
+        if found_item.status == 'issued':
+            score -= 20
+    
+        # НОВОЕ: Бонус за свежую находку (+5 баллов, если найдена на этой неделе)
+        if found_item.created_at >= timezone.now() - timedelta(days=7):
+            score += 5
+    
+        return max(0, min(100, score))  # Ограничиваем от 0 до 100
 
-    # Совпадение категории
-    if lost_item.category == found_item.category:
-        score += 40
 
-    # Совпадение описания
-    lost_desc_words = set((lost_item.description or "").lower().split())
-    found_desc_words = set((found_item.description or "").lower().split())
+    def calculate_date_match_score(self, lost_date, found_date):
+        """
+        Рассчитывает совпадение по дате.
+        Чем ближе даты - тем выше балл.
+        """
+        delta = abs((lost_date - found_date).days)
+    
+        if delta <= 1:      # +/- 1 день
+            return 15
+        elif delta <= 3:    # +/- 3 дня
+            return 10
+        elif delta <= 7:    # +/- неделя
+            return 5
+        elif delta <= 14:   # +/- 2 недели
+            return 2
+        else:
+            return 0
 
-    common_desc = lost_desc_words & found_desc_words
-    score += min(20, len(common_desc) * 2)
-
-    # Совпадение местоположения
-    lost_location = (lost_item.location_text or "").lower()
-    found_location = (found_item.location_ref or "").lower()
-
-    if (
-        lost_location
-        and found_location
-        and (
-            lost_location in found_location
-            or found_location in lost_location
+class MatchClosedItemsView(APIView):
+    """Поиск совпадений с недавно выданными или закрытыми вещами"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request, lost_item_id):
+        try:
+            lost_item = LostItem.objects.get(id=lost_item_id)
+        except LostItem.DoesNotExist:
+            return Response({'error': 'Пропажа не найдена'}, status=404)
+        
+        # Ищем ВЫДАННЫЕ и ЗАКРЫТЫЕ находки за последние 30 дней
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        closed_found_items = FoundItem.objects.filter(
+            status__in=['issued', 'closed'],
+            created_at__gte=thirty_days_ago
         )
-    ):
-        score += 20
-
-    return min(100, score)
+        
+        # Фильтр по категории
+        if lost_item.category:
+            closed_found_items = closed_found_items.filter(category=lost_item.category)
+        
+        # Рассчитываем совпадения
+        results = []
+        for found in closed_found_items:
+            score = self.calculate_match_score(lost_item, found)
+            if score > 30:  # Для закрытых вещей используем более высокий порог
+                serializer = FoundItemSerializer(found, context={'request': request})
+                results.append({
+                    'found_item': serializer.data,
+                    'match_score': score,
+                    'status_note': self.get_status_note(found.status)
+                })
+        
+        results.sort(key=lambda x: x['match_score'], reverse=True)
+        
+        return Response({
+            'lost_item_id': lost_item_id,
+            'message': 'Внимание! Эти вещи уже были выданы, но возможно это ваша пропажа',
+            'matches': results[:10]
+        })
+    
+    def calculate_match_score(self, lost_item, found_item):
+        """Упрощённый расчёт для закрытых вещей"""
+        score = 0
+        
+        if lost_item.category == found_item.category:
+            score += 40
+        
+        # Поиск по ключевым словам
+        lost_keywords = set(lost_item.title.lower().split() + lost_item.description.lower().split())
+        found_keywords = set(found_item.title.lower().split() + found_item.description.lower().split())
+        common = lost_keywords & found_keywords
+        score += min(30, len(common) * 5)
+        
+        # Совпадение места
+        if lost_item.location.lower() in found_item.location.lower():
+            score += 30
+        
+        return min(100, score)
+    
+    def get_status_note(self, status):
+        """Пояснение к статусу"""
+        if status == 'issued':
+            return 'Эта вещь уже была выдана кому-то'
+        elif status == 'closed':
+            return 'Это объявление закрыто'
+        return ''
+    
+class HotMatchView(APIView):
+    """
+    Поиск совпадений за последние 3 дня (горячие следы)
+    Для срочных случаев
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request, lost_item_id):
+        try:
+            lost_item = LostItem.objects.get(id=lost_item_id)
+        except LostItem.DoesNotExist:
+            return Response({'error': 'Пропажа не найдена'}, status=404)
+        
+        # Ищем только свежие находки (последние 3 дня)
+        three_days_ago = timezone.now() - timedelta(days=3)
+        recent_found = FoundItem.objects.filter(
+            status='active',
+            created_at__gte=three_days_ago
+        )
+        
+        if lost_item.category:
+            recent_found = recent_found.filter(category=lost_item.category)
+        
+        # Поиск по ключевым словам
+        keywords = f"{lost_item.title} {lost_item.description}".split()
+        for keyword in keywords[:5]:
+            if len(keyword) > 3:
+                recent_found = recent_found.filter(
+                    Q(title__icontains=keyword) | Q(description__icontains=keyword)
+                )
+        
+        results = []
+        for found in recent_found[:15]:
+            score = self.calculate_hot_score(lost_item, found)
+            if score > 40:
+                serializer = FoundItemSerializer(found, context={'request': request})
+                results.append({
+                    'found_item': serializer.data,
+                    'match_score': score,
+                    'hours_diff': self.get_hours_diff(found.created_at)
+                })
+        
+        results.sort(key=lambda x: x['match_score'], reverse=True)
+        
+        return Response({
+            'lost_item_id': lost_item_id,
+            'message': 'Свежие находки (последние 3 дня)',
+            'matches': results[:10]
+        })
+    
+    def calculate_hot_score(self, lost_item, found_item):
+        """Расчёт для горячих совпадений (выше приоритет у свежих)"""
+        score = 0
+        
+        if lost_item.category == found_item.category:
+            score += 35
+        
+        # Поиск по словам
+        lost_words = set(lost_item.title.lower().split())
+        found_words = set(found_item.title.lower().split())
+        common = lost_words & found_words
+        score += min(25, len(common) * 5)
+        
+        # Бонус за свежесть
+        hours_ago = (timezone.now() - found_item.created_at).total_seconds() / 3600
+        if hours_ago < 24:
+            score += 20  # Найдено сегодня
+        elif hours_ago < 48:
+            score += 10  # Найдено вчера
+        elif hours_ago < 72:
+            score += 5   # Найдено позавчера
+        
+        return min(100, score)
+    
+    def get_hours_diff(self, created_at):
+        delta = timezone.now() - created_at
+        hours = int(delta.total_seconds() / 3600)
+        if hours < 24:
+            return f"{hours} часов назад"
+        else:
+            days = hours // 24
+            return f"{days} дней назад"
 
 def send_match_notification(lost_item, found_items):
     """Отправляет email владельцу пропажи о найденных совпадениях"""
