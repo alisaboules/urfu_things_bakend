@@ -162,11 +162,11 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
     
     # Поля для точной фильтрации
     filterset_fields = {
-        'status': ['exact'],
-        'category': ['exact'],
-        'location': ['icontains'],
-    }
-    
+    'status': ['exact'],
+    'category': ['exact'],
+    'location_text': ['icontains'],
+    'location_zone': ['icontains'],
+}
     # Поля для поиска
     search_fields = ['title', 'description']
     
@@ -185,7 +185,7 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
         return context
     
     def perform_create(self, serializer):
-        lost_item = serializer.save(lost_by=self.request.user)
+        lost_item = serializer.save(user=self.request.user)
         
         match_view = MatchFoundItemsView()
         
@@ -212,7 +212,8 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
                     'found_item': {
                         'id': found.id,
                         'title': found.title,
-                        'location': found.location
+                        'description': found.description,
+                        'location': found.location_ref
                     },
                     'match_score': score
                 })
@@ -401,14 +402,14 @@ class MatchFoundItemsView(APIView):
         score += min(15, len(common_title) * 4)
     
         # Совпадение в описании (15 баллов)
-        lost_desc_words = set(lost_item.description.lower().split())
-        found_desc_words = set(found_item.description.lower().split())
+        lost_desc_words = set((lost_item.description or "").lower().split())
+        found_desc_words = set((found_item.description or "").lower().split())
         common_desc = lost_desc_words & found_desc_words
         score += min(15, len(common_desc) * 2)
     
         # Совпадение местоположения (15 баллов)
-        lost_location = lost_item.location.lower()
-        found_location = found_item.location.lower()
+        lost_location = (lost_item.location_text or "").lower()
+        found_location = (found_item.location_ref or "").lower()
         if lost_location in found_location or found_location in lost_location:
             score += 15
     
@@ -500,7 +501,7 @@ class MatchClosedItemsView(APIView):
         score += min(30, len(common) * 5)
         
         # Совпадение места
-        if lost_item.location.lower() in found_item.location.lower():
+        if lost_item.location_text.lower() in found_item.location_ref.lower():
             score += 30
         
         return min(100, score)
@@ -1147,7 +1148,7 @@ class MyItemsStatusView(APIView):
                 'status': item.status,
                 'status_display': item.get_status_display(),
                 'category_name': item.category.name if item.category else None,
-                'location': item.location,
+                'location': item.location_ref,
                 'created_at': item.created_at,
                 'photo_url': item.image.url if item.image else None,
             })
@@ -1162,7 +1163,7 @@ class MyItemsStatusView(APIView):
                 'status': item.status,
                 'status_display': item.get_status_display(),
                 'category_name': item.category.name if item.category else None,
-                'location': item.location,
+                'location': item.location_text,
                 'created_at': item.created_at,
                 'photo_url': item.photo.url if item.photo else None,
             })
@@ -1173,12 +1174,12 @@ class MyItemsStatusView(APIView):
         # Статистика по статусам
         stats = {
             'total': len(result),
-            'found_active': FoundItem.objects.filter(found_by=request.user, status='active').count(),
-            'found_issued': FoundItem.objects.filter(found_by=request.user, status='issued').count(),
-            'found_closed': FoundItem.objects.filter(found_by=request.user, status='closed').count(),
-            'lost_active': LostItem.objects.filter(lost_by=request.user, status='active').count(),
-            'lost_matched': LostItem.objects.filter(lost_by=request.user, status='matched').count(),
-            'lost_closed': LostItem.objects.filter(lost_by=request.user, status='closed').count(),
+            'found_active': FoundItem.objects.filter(user=request.user, status='active').count(),
+            'found_issued': FoundItem.objects.filter(user=request.user, status='issued').count(),
+            'found_closed': FoundItem.objects.filter(user=request.user, status='closed').count(),
+            'lost_active': LostItem.objects.filter(user=request.user, status='active').count(),
+            'lost_matched': LostItem.objects.filter(user=request.user, status='matched').count(),
+            'lost_closed': LostItem.objects.filter(user=request.user, status='closed').count(),
         }
         
         return Response({
@@ -1193,7 +1194,7 @@ class MyFoundItemsView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        return FoundItem.objects.filter(found_by=self.request.user).order_by('-created_at')
+        return FoundItem.objects.filter(user=self.request.user).order_by('-created_at')
 
 
 class MyLostItemsView(generics.ListAPIView):
@@ -1202,7 +1203,7 @@ class MyLostItemsView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        return LostItem.objects.filter(lost_by=self.request.user).order_by('-created_at')
+        return LostItem.objects.filter(user=self.request.user).order_by('-created_at')
     
 class AppealListView(generics.ListAPIView):
     """Просмотр обращений (свои для студента, все для админа)"""
