@@ -87,7 +87,7 @@ class FoundItemSerializer(serializers.ModelSerializer):
         model = FoundItem
         fields = [
             'id',
-            'title'
+            'title',
             'user',
             'category',
             'pickup_point',
