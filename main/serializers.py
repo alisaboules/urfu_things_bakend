@@ -80,6 +80,7 @@ class PhotoSerializer(serializers.ModelSerializer):
 
 class FoundItemSerializer(serializers.ModelSerializer):
     author = serializers.CharField(source='user.first_name', read_only=True)
+    category_name = serializers.ReadOnlyField(source='category.name')
     category = serializers.PrimaryKeyRelatedField(
     queryset=Category.objects.all()
 )
@@ -90,6 +91,7 @@ class FoundItemSerializer(serializers.ModelSerializer):
             'title',
             'user',
             'category',
+            'category_name',
             'pickup_point',
             'location_type',
             'location_ref',
