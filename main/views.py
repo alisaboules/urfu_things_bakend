@@ -75,7 +75,7 @@ class FoundItemListCreateAPIView(generics.ListCreateAPIView):
     
     
     # Поля для поиска
-    search_fields = ['title', 'description']
+    search_fields = ['category__name', 'description']
     
     # Поля для сортировки
     ordering_fields = ['created_at', 'title', 'status']
@@ -168,7 +168,7 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
     'location_zone': ['icontains'],
 }
     # Поля для поиска
-    search_fields = ['title', 'description']
+    search_fields = ['category__name', 'description']
     
     # Поля для сортировки
     ordering_fields = ['created_at', 'title', 'status']
@@ -196,7 +196,7 @@ class LostItemListCreateAPIView(generics.ListCreateAPIView):
             found_items = found_items.filter(category=lost_item.category)
         
         # Поиск по ключевым словам
-        keywords = f"{lost_item.title} {lost_item.description}".split()
+        keywords = f"{lost_item.category.name if lost_item.category else ''} {lost_item.description or ''}".split()
         for keyword in keywords[:10]:
             if len(keyword) > 3:
                 found_items = found_items.filter(
@@ -361,7 +361,7 @@ class MatchFoundItemsView(APIView):
             found_items = found_items.filter(category=lost_item.category)
         
         # Поиск по ключевым словам из заголовка и описания
-        keywords = f"{lost_item.title} {lost_item.description}".split()
+        keywords = f"{lost_item.category.name if lost_item.category else ''} {lost_item.description or ''}".split()
         for keyword in keywords[:10]:  # берём первые 10 слов
             if len(keyword) > 3:  # игнорируем короткие слова
                 found_items = found_items.filter(
@@ -396,9 +396,18 @@ class MatchFoundItemsView(APIView):
             score += 30
     
         # Совпадение в заголовке (15 баллов)
-        lost_title_words = set(lost_item.title.lower().split())
-        found_title_words = set(found_item.title.lower().split())
-        common_title = lost_title_words & found_title_words
+        lost_keywords = (
+            (lost_item.category.name.lower().split() if lost_item.category else [])
+            + ((lost_item.description or "").lower().split())
+        )
+
+        found_keywords = (
+            (found_item.category.name.lower().split() if found_item.category else [])
+            + ((found_item.description or "").lower().split())
+        )
+
+        common_title = set(lost_keywords) & set(found_keywords)
+        # common_title = lost_title_words & found_title_words
         score += min(15, len(common_title) * 4)
     
         # Совпадение в описании (15 баллов)
@@ -495,8 +504,8 @@ class MatchClosedItemsView(APIView):
             score += 40
         
         # Поиск по ключевым словам
-        lost_keywords = set(lost_item.title.lower().split() + lost_item.description.lower().split())
-        found_keywords = set(found_item.title.lower().split() + found_item.description.lower().split())
+        lost_keywords = set(lost_item.category.name.lower().split() if lost_item.category else [] + lost_item.description.lower().split())
+        found_keywords = set(found_item.category.name.lower().split() if found_item.category else [] + found_item.description.lower().split())
         common = lost_keywords & found_keywords
         score += min(30, len(common) * 5)
         
@@ -538,7 +547,7 @@ class HotMatchView(APIView):
             recent_found = recent_found.filter(category=lost_item.category)
         
         # Поиск по ключевым словам
-        keywords = f"{lost_item.title} {lost_item.description}".split()
+        keywords = f"{lost_item.category.name if lost_item.category else ''} {lost_item.description or ''}".split()
         for keyword in keywords[:5]:
             if len(keyword) > 3:
                 recent_found = recent_found.filter(
@@ -572,8 +581,8 @@ class HotMatchView(APIView):
             score += 35
         
         # Поиск по словам
-        lost_words = set(lost_item.title.lower().split())
-        found_words = set(found_item.title.lower().split())
+        lost_words = set((lost_item.title or "").lower().split())
+        found_words = set((found_item.title or "").lower().split())
         common = lost_words & found_words
         score += min(25, len(common) * 5)
         
@@ -1165,7 +1174,7 @@ class MyItemsStatusView(APIView):
                 'category_name': item.category.name if item.category else None,
                 'location': item.location_text,
                 'created_at': item.created_at,
-                'photo_url': item.photo.url if item.photo else None,
+                'photo_url': item.image.url if item.image else None,
             })
         
         # Сортируем по дате создания (новые сверху)
@@ -1178,7 +1187,7 @@ class MyItemsStatusView(APIView):
             'found_issued': FoundItem.objects.filter(user=request.user, status='issued').count(),
             'found_closed': FoundItem.objects.filter(user=request.user, status='closed').count(),
             'lost_active': LostItem.objects.filter(user=request.user, status='active').count(),
-            'lost_matched': LostItem.objects.filter(user=request.user, status='matched').count(),
+            'lost_matched': LostItem.objects.filter(user=request.user, status='has_match').count(),
             'lost_closed': LostItem.objects.filter(user=request.user, status='closed').count(),
         }
         
