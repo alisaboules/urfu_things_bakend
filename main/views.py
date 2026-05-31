@@ -1262,21 +1262,16 @@ class SaveSearchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        query = request.data.get('query')
+        query = request.data.get("query", "").strip()
 
-        if not query:
-            return Response(
-                {'error': 'Пустой запрос'},
-                status=400
+        if query:
+            SearchHistory.objects.get_or_create(
+                user=request.user,
+                query=query
             )
 
-        SearchHistory.objects.create(
-            user=request.user,
-            query=query
-        )
-
-        return Response({'success': True})
-
+        return Response({"status": "ok"})
+    
 class SearchHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
