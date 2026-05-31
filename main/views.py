@@ -6,7 +6,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters.rest_framework import DjangoFilterBackend # type: ignore
 from rest_framework import filters as drf_filters
-from .models import Appeal, Category, Log, PickupPoint, FoundItem, LostItem, User
+from .models import Appeal, Category, Log, PickupPoint, FoundItem, LostItem, SearchHistory, User
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.conf import settings
@@ -1257,3 +1257,53 @@ class AppealDetailView(generics.RetrieveUpdateAPIView):
         if self.request.method == 'GET':
             return [permissions.IsAuthenticated()]
         return [IsAdmin()]
+    
+class SaveSearchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        query = request.data.get('query')
+
+        if not query:
+            return Response(
+                {'error': 'Пустой запрос'},
+                status=400
+            )
+
+        SearchHistory.objects.create(
+            user=request.user,
+            query=query
+        )
+
+        return Response({'success': True})
+
+class SearchHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        history = (
+            SearchHistory.objects
+            .filter(user=request.user)
+            .values_list('query', flat=True)
+            .distinct()[:10]
+        )
+
+        return Response(list(history))
+    
+class SearchSuggestionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        q = request.GET.get('q', '')
+
+        suggestions = (
+            SearchHistory.objects
+            .filter(
+                user=request.user,
+                query__istartswith=q
+            )
+            .values_list('query', flat=True)
+            .distinct()[:5]
+        )
+
+        return Response(list(suggestions))

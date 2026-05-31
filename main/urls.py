@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import UploadAvatarView
+from .views import SaveSearchView, SearchHistoryView, SearchSuggestionsView, UploadAvatarView
 
 urlpatterns = [
     # Регистрация
@@ -59,4 +59,19 @@ urlpatterns = [
     path('match/<int:lost_item_id>/', views.MatchFoundItemsView.as_view(), name='match'),
     path('match/closed/<int:lost_item_id>/', views.MatchClosedItemsView.as_view(), name='match-closed'),
     path('match/hot/<int:lost_item_id>/', views.HotMatchView.as_view(), name='match-hot'),
+
+    path(
+    'search/history/',
+    SearchHistoryView.as_view()
+),
+
+path(
+    'search/save/',
+    SaveSearchView.as_view()
+),
+
+path(
+    'search/suggestions/',
+    SearchSuggestionsView.as_view()
+),
 ]

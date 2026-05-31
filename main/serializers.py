@@ -2,9 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
 from .models import (
     User, Category, PickupPoint, FoundItem, LostItem, 
-    Building, Photo, Match, Issuance, Log, Appeal
+    Building, Photo, Match, Issuance, Log, Appeal, SearchHistory
 )
-
+from .models import SearchHistory
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source='first_name', read_only=True)
@@ -248,3 +248,8 @@ class AppealUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appeal
         fields = ['status', 'admin_comment']
+
+class SearchHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SearchHistory
+        fields = ['id', 'query', 'created_at']
