@@ -103,7 +103,8 @@ class FoundItemSerializer(serializers.ModelSerializer):
             'status',
             'created_at',
             'image',
-            'author'
+            'author',
+            'pickup_point_name',
         ]
         read_only_fields = ['user', 'created_at']
 
