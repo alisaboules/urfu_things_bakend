@@ -134,12 +134,16 @@ class LostItemSerializer(serializers.ModelSerializer):
     # )
     category = serializers.PrimaryKeyRelatedField(
     queryset=Category.objects.all()
-)
+    )
+    pickup_point_name = serializers.CharField(
+        source='pickup_point.name',
+        read_only=True
+    )
     class Meta:
         model = LostItem
         fields = ['id', 'title', 'user', 'user_username', 'category', 'category_name', 
                   'location_zone', 'location_text', 'description', 'status', 
-                  'created_at', 'photos', 'image', 'author']
+                  'created_at', 'photos', 'image', 'author', 'pickup_point_name']
         read_only_fields = ['user', 'created_at']
         
     def get_image(self, obj):
