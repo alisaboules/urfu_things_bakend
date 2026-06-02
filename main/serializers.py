@@ -83,7 +83,11 @@ class FoundItemSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
     category = serializers.PrimaryKeyRelatedField(
     queryset=Category.objects.all()
-)
+    )
+    pickup_point_name = serializers.CharField(
+        source='pickup_point.name',
+        read_only=True
+    )
     class Meta:
         model = FoundItem
         fields = [
