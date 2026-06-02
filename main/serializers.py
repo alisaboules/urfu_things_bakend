@@ -84,6 +84,12 @@ class FoundItemSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(
     queryset=Category.objects.all()
     )
+    pickup_point = serializers.PrimaryKeyRelatedField(
+    queryset=PickupPoint.objects.all(),
+    required=False,
+    allow_null=True
+    )
+
     pickup_point_name = serializers.CharField(
         source='pickup_point.name',
         read_only=True
@@ -120,7 +126,7 @@ class FoundItemSerializer(serializers.ModelSerializer):
         if not obj.image:
             return None
         return obj.image.url
-
+   
 
 class LostItemSerializer(serializers.ModelSerializer):
     author = serializers.CharField(source='user.first_name', read_only=True)
@@ -135,6 +141,12 @@ class LostItemSerializer(serializers.ModelSerializer):
     category = serializers.PrimaryKeyRelatedField(
     queryset=Category.objects.all()
     )
+    pickup_point = serializers.PrimaryKeyRelatedField(
+    queryset=PickupPoint.objects.all(),
+    required=False,
+    allow_null=True
+    )
+
     pickup_point_name = serializers.CharField(
         source='pickup_point.name',
         read_only=True
@@ -143,7 +155,7 @@ class LostItemSerializer(serializers.ModelSerializer):
         model = LostItem
         fields = ['id', 'title', 'user', 'user_username', 'category', 'category_name', 
                   'location_zone', 'location_text', 'description', 'status', 
-                  'created_at', 'photos', 'image', 'author', 'pickup_point_name']
+                  'created_at', 'photos', 'image', 'author', 'pickup_point_name', 'pickup_point']
         read_only_fields = ['user', 'created_at']
         
     def get_image(self, obj):
