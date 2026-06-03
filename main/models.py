@@ -183,7 +183,12 @@ class LostItem(models.Model):
     blank=True,
     null=True
 )
-
+    pickup_point = models.ForeignKey(
+    PickupPoint,
+    on_delete=models.RESTRICT,
+    null=True,
+    blank=True
+    )
     """Пропажи"""
     STATUS_CHOICES = [
         ('active', 'Активна'),
