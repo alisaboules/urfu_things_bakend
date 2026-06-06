@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from vertexai.vision_models import MultiModalEmbeddingModel, Image
 from google.cloud import aiplatform
@@ -23,7 +23,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5176", "http://localhost:5173"],
+    allow_origins=["https://urfu-things-1.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,13 +46,13 @@ async def search_similar(file: UploadFile = File(...), top_k: int = 5):
     results = [{"id": neighbor.id, "distance": neighbor.distance} for neighbor in response[0]]
     return {"results": results}
 @app.post("/upsert")
-async def upsert_item(datapoint_id: str, file: UploadFile = File(...)):
+async def upsert_item(datapoint_id: str = Form(), file: UploadFile = File(...)):
     image_bytes = await file.read()
     emb = get_embedding_from_image_bytes(image_bytes)
     index.upsert_datapoints([{"datapoint_id": datapoint_id, "feature_vector": emb}])
     return {"status": "ok"}
 
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+# if __name__ == "__main__":
+#     import uvicorn
+#     port = int(os.environ.get("PORT", 8000))
+#     uvicorn.run(app, host="0.0.0.0", port=port)
