@@ -11,3 +11,8 @@ firebase-admin==6.0.0
 cloudinary
 django-cloudinary-storage
 django-filter
+fastapi
+uvicorn
+google-cloud-aiplatform
+vertexai
+python-multipart
