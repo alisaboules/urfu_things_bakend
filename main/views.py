@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from django_filters.rest_framework import DjangoFilterBackend # type: ignore
 from rest_framework import filters as drf_filters
@@ -1302,3 +1303,45 @@ class SearchSuggestionsView(APIView):
         )
 
         return Response(list(suggestions))
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_found_item(request, pk):
+    try:
+        item = FoundItem.objects.get(id=pk)
+    except FoundItem.DoesNotExist:
+        return Response(
+            {"error": "Объявление не найдено"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if item.user != request.user and request.user.role != "admin":
+        return Response(
+            {"error": "Нет прав"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    item.delete()
+
+    return Response({"success": True})
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_lost_item(request, pk):
+    try:
+        item = LostItem.objects.get(id=pk)
+    except LostItem.DoesNotExist:
+        return Response(
+            {"error": "Объявление не найдено"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if item.user != request.user and request.user.role != "admin":
+        return Response(
+            {"error": "Нет прав"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    item.delete()
+
+    return Response({"success": True})

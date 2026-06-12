@@ -74,4 +74,14 @@ path(
     'search/suggestions/',
     SearchSuggestionsView.as_view()
 ),
+  path(
+        "found/<int:pk>/delete/",
+        views.delete_found_item,
+        name="delete_found_item",
+    ),
+    path(
+        "lost/<int:pk>/delete/",
+        views.delete_lost_item,
+        name="delete_lost_item",
+    ),
 ]
