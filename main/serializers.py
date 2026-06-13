@@ -9,10 +9,11 @@ from .models import SearchHistory
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source='first_name', read_only=True)
     avatar = serializers.SerializerMethodField()
+    pickup_point_name = serializers.CharField(source='pickup_point.name', read_only=True, allow_null=True)
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'role', 'created_at', 'full_name', 'avatar',   "notifications_enabled",
-            "fcm_token", 'student_id', 'pickup_point'
+            "fcm_token", 'student_id', 'pickup_point', 'pickup_point_name'
         ]
 
     def get_avatar(self, obj):
