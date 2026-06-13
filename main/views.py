@@ -1237,7 +1237,10 @@ class AppealCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        appeal = serializer.save(user=self.request.user)
+        if appeal.found_item and appeal.found_item.status == 'active':
+            appeal.found_item.status = 'in_pickup'
+            appeal.found_item.save(update_fields=['status'])
 
 
 class AppealDetailView(generics.RetrieveUpdateAPIView):
