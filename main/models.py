@@ -355,7 +355,6 @@ class Notification(models.Model):
         related_name='notifications'
     )
     action_type = models.CharField(max_length=10, choices=ACTION_TYPES)
-
     item_id = models.PositiveIntegerField()
     item_title = models.CharField(max_length=255)      
     item_category = models.CharField(max_length=255, blank=True)
