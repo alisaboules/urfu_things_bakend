@@ -12,7 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'phone', 'role', 'created_at', 'full_name', 'avatar',   "notifications_enabled",
-            "fcm_token", 'student_id'
+            "fcm_token", 'student_id', 'pickup_point'
         ]
 
     def get_avatar(self, obj):

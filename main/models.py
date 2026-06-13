@@ -22,6 +22,13 @@ class User(AbstractUser):
     blank=True,
     null=True
     )
+    pickup_point = models.ForeignKey(
+        'PickupPoint',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Пункт выдачи (для сотрудников)'
+    )
     student_id = models.CharField(max_length=50, blank=True, null=True)
     notifications_enabled = models.BooleanField(default=True)
     fcm_token = models.TextField(null=True, blank=True)
