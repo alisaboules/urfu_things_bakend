@@ -107,14 +107,6 @@ class PickupPoint(models.Model):
     
     def __str__(self):
         return self.name
-    
-    class Meta:
-        db_table = 'pickup_point'
-        verbose_name = 'Пункт выдачи'
-        verbose_name_plural = 'Пункты выдачи'
-    
-    def __str__(self):
-        return self.name
 
 class FoundItem(models.Model):
     category = models.ForeignKey(

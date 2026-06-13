@@ -69,7 +69,7 @@ class PickupPointSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = PickupPoint
-        fields = ['id', 'name', 'location', 'building', 'building_name']
+        fields = ['id', 'name', 'location', 'building', 'building_name', 'address', 'latitude', 'longitude']
 
 
 class PhotoSerializer(serializers.ModelSerializer):
