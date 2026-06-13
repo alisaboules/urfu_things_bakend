@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import SaveSearchView, SearchHistoryView, SearchSuggestionsView, UploadAvatarView
+from .views import SaveSearchView, SearchHistoryView, SearchSuggestionsView, UploadAvatarView, NotificationListCreateView
 
 urlpatterns = [
     # Регистрация
@@ -84,4 +84,6 @@ path(
         views.delete_lost_item,
         name="delete_lost_item",
     ),
+
+    path('notifications/', NotificationListCreateView.as_view(), name='notifications'),
 ]

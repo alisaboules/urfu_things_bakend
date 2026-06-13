@@ -5,6 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
+from .models import Notification
+from .serializers import NotificationSerializer
 from django_filters.rest_framework import DjangoFilterBackend # type: ignore
 from rest_framework import filters as drf_filters
 from .models import Appeal, Category, Log, PickupPoint, FoundItem, LostItem, SearchHistory, User
@@ -16,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from firebase_admin import messaging
+from django.contrib.auth import get_user_model
 from datetime import timedelta
 from django.utils import timezone
 from .utils import find_matches, get_nearest_pickup_point, calculate_distance
@@ -1348,3 +1351,20 @@ def delete_lost_item(request, pk):
     item.delete()
 
     return Response({"success": True})
+User = get_user_model()
+class NotificationListCreateView(generics.ListCreateAPIView):
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        if self.request.user.role == 'admin':
+            return Notification.objects.filter(user=self.request.user)
+        return Notification.objects.none()
+
+    def perform_create(self, serializer):
+        admins = User.objects.filter(role='admin')  
+        validated_data = serializer.validated_data
+        notifications = []
+        for admin in admins:
+            notifications.append(Notification(user=admin, **validated_data))
+        Notification.objects.bulk_create(notifications)

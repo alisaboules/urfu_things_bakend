@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
+from django.conf import settings
 
 # Кастомная модель пользователя (соответствует SQL таблице users)
 class User(AbstractUser):
@@ -339,3 +341,37 @@ class SearchHistory(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+class Notification(models.Model):
+
+    ACTION_TYPES = [
+        ('claim', 'Заявка на вещь'),
+        ('confirm', 'Подтверждение выдачи'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    action_type = models.CharField(max_length=10, choices=ACTION_TYPES)
+
+    item_id = models.PositiveIntegerField()
+    item_title = models.CharField(max_length=255)      
+    item_category = models.CharField(max_length=255, blank=True)
+    item_description = models.TextField(blank=True)
+
+    # Кто создал вещь (автор)
+    creator_name = models.CharField(max_length=255)       
+    creator_id = models.PositiveIntegerField()
+
+    # Где находится вещь (ПВЗ)
+    pickup_point_name = models.CharField(max_length=255, blank=True)
+
+    # Время действия (когда нажата кнопка)
+    action_time = models.DateTimeField(auto_now_add=True)
+
+    is_read = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-action_time']

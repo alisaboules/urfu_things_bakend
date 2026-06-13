@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from .models import Notification
 from django.contrib.auth.password_validation import validate_password
 from .models import (
     User, Category, PickupPoint, FoundItem, LostItem, 
@@ -275,3 +276,9 @@ class SearchHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = SearchHistory
         fields = ['id', 'query', 'created_at']
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'
+        read_only_fields = ['id', 'action_time', 'is_read', 'user']
