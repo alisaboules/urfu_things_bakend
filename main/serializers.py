@@ -191,17 +191,42 @@ class FoundItemStatusUpdateSerializer(serializers.Serializer):
 class LostItemStatusUpdateSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=LostItem.STATUS_CHOICES)
 
+# class IssuanceSerializer(serializers.ModelSerializer):
+#     found_item_title = serializers.ReadOnlyField(source='found_item.description')
+#     pickup_point_name = serializers.ReadOnlyField(source='pickup_point.name')
+#     user_username = serializers.ReadOnlyField(source='user.username')
+    
+#     class Meta:
+#         model = Issuance
+#         fields = ['id', 'found_item', 'found_item_title', 'pickup_point', 
+#                   'pickup_point_name', 'user', 'user_username', 'issued_at', 'verified_by']
+#         read_only_fields = ['issued_at']
 class IssuanceSerializer(serializers.ModelSerializer):
     found_item_title = serializers.ReadOnlyField(source='found_item.description')
-    pickup_point_name = serializers.ReadOnlyField(source='pickup_point.name')
-    user_username = serializers.ReadOnlyField(source='user.username')
-    
+    found_item_description = serializers.ReadOnlyField(source='found_item.description')
+    found_item_image = serializers.ReadOnlyField(source='found_item.image')
+    found_item_location = serializers.ReadOnlyField(source='found_item.location_ref')
+    found_item_author = serializers.ReadOnlyField(source='found_item.user.username')
+    found_item_created_at = serializers.ReadOnlyField(source='found_item.created_at')
+
     class Meta:
         model = Issuance
-        fields = ['id', 'found_item', 'found_item_title', 'pickup_point', 
-                  'pickup_point_name', 'user', 'user_username', 'issued_at', 'verified_by']
-        read_only_fields = ['issued_at']
-
+        fields = [
+            'id',
+            'found_item',
+            'found_item_title',
+            'found_item_description',
+            'found_item_image',
+            'found_item_location',
+            'found_item_author',
+            'found_item_created_at',
+            'pickup_point',
+            'pickup_point_name',
+            'user',
+            'user_username',
+            'issued_at',
+            'verified_by',
+        ]
 
 class ConfirmIssuanceSerializer(serializers.Serializer):
     """Сериализатор для подтверждения выдачи"""
