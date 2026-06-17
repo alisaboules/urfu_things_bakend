@@ -202,7 +202,7 @@ class LostItemStatusUpdateSerializer(serializers.Serializer):
 #                   'pickup_point_name', 'user', 'user_username', 'issued_at', 'verified_by']
 #         read_only_fields = ['issued_at']
 class IssuanceSerializer(serializers.ModelSerializer):
-    found_item_title = serializers.ReadOnlyField(source='found_item.description')
+    found_item_title = serializers.ReadOnlyField(source='found_item.title')
     found_item_description = serializers.ReadOnlyField(source='found_item.description')
     found_item_image = serializers.SerializerMethodField()
     found_item_location = serializers.ReadOnlyField(source='found_item.location_ref')
