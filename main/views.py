@@ -1412,15 +1412,20 @@ class HistoryCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        item_id = request.data.get("item_id")
+        action_type = request.data.get("action_type")
+
+        if not item_id or not action_type:
+            return Response(
+                {"error": "item_id и action_type обязательны"},
+                status=400
+            )
+
         history = History.objects.create(
             user=request.user,
-            item_id=request.data.get("item_id"),
-            action_type=request.data.get("action_type"),
-            meta=request.data.get("meta", {}),
+            item_id=item_id,
+            action_type=action_type,
         )
 
-        return Response({
-            "id": history.id,
-            "status": "ok"
-        })
+        return Response({"id": history.id, "status": "ok"})
     
