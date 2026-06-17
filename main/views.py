@@ -839,6 +839,18 @@ class ConfirmIssuanceView(APIView):
             user_to_receive = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response({'error': 'Пользователь не найден'}, status=404)
+
+            # если вдруг статус ещё active — переводим в in_pickup
+        if found_item.status == "active":
+            found_item.status = "in_pickup"
+            found_item.save()
+
+        # защита (как у тебя уже есть)
+        if found_item.status != 'in_pickup':
+            return Response(
+                {'error': f'Вещь не может быть выдана. Текущий статус: {found_item.status}'},
+                status=400
+            )
         
         # Создаём запись о выдаче
         issuance = Issuance.objects.create(
