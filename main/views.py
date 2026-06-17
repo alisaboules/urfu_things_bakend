@@ -1277,11 +1277,11 @@ class ClaimHistoryView(APIView):
     def post(self, request):
         found_item_id = request.data["found_item_id"]
 
-        History.objects.create(
-            user=request.user,
-            item_id=found_item_id,
-            action_type="claim",
-        )
+        # History.objects.create(
+        #     user=request.user,
+        #     item_id=found_item_id,
+        #     action_type="claim",
+        # )
 
         return Response({"status": "ok"})
 
