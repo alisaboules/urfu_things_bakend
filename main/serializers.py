@@ -208,7 +208,9 @@ class IssuanceSerializer(serializers.ModelSerializer):
     found_item_location = serializers.ReadOnlyField(source='found_item.location_ref')
     found_item_author = serializers.ReadOnlyField(source='found_item.user.username')
     found_item_created_at = serializers.ReadOnlyField(source='found_item.created_at')
-
+    pickup_point_name = serializers.CharField(source='pickup_point.name', read_only=True)
+    user_username = serializers.ReadOnlyField(source='user.username')
+    
     class Meta:
         model = Issuance
         fields = [

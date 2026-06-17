@@ -266,6 +266,7 @@ class Issuance(models.Model):
         related_name='issuances',
         verbose_name='Пункт выдачи'
     )
+    
     user = models.ForeignKey(
         User, 
         on_delete=models.RESTRICT, 
