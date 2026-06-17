@@ -1405,10 +1405,8 @@ class NotificationListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        if self.request.user.role == 'admin':
-            return Notification.objects.filter(user=self.request.user)
-        return Notification.objects.none()
-
+    # Возвращаем уведомления только для текущего пользователя
+        return Notification.objects.filter(user=self.request.user)
     def perform_create(self, serializer):
         admins = User.objects.filter(role='admin')  
         validated_data = serializer.validated_data
