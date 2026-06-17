@@ -818,12 +818,12 @@ class ConfirmIssuanceView(APIView):
         except FoundItem.DoesNotExist:
             return Response({'error': 'Находка не найдена'}, status=404)
         
-        # Проверка статуса находки
-        if found_item.status != 'in_pickup':
-            return Response(
-                {'error': f'Вещь не может быть выдана. Текущий статус: {found_item.status}'},
-                status=400
-            )
+        # # Проверка статуса находки
+        # if found_item.status != 'in_pickup':
+        #     return Response(
+        #         {'error': f'Вещь не может быть выдана. Текущий статус: {found_item.status}'},
+        #         status=400
+        #     )
         
         # Проверка, что находка принадлежит пункту выдачи сотрудника
         user_role = getattr(request.user, 'role', '')
@@ -841,9 +841,9 @@ class ConfirmIssuanceView(APIView):
             return Response({'error': 'Пользователь не найден'}, status=404)
 
         # # если вдруг статус ещё active — переводим в in_pickup
-        # if found_item.status == "active":
-        #     found_item.status = "in_pickup"
-        #     found_item.save()
+        if found_item.status == "active":
+            found_item.status = "in_pickup"
+            found_item.save()
 
         # защита (как у тебя уже есть)
         if found_item.status != 'in_pickup':
@@ -865,7 +865,7 @@ class ConfirmIssuanceView(APIView):
         found_item.status = 'issued'
         found_item.save()
         
-        
+
         # Логирование
         from .utils import log_action
         log_action(
