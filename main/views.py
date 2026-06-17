@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
-from .models import Notification
+from .models import Notification, History
 from .serializers import NotificationSerializer
 from django_filters.rest_framework import DjangoFilterBackend # type: ignore
 from rest_framework import filters as drf_filters
@@ -864,7 +864,14 @@ class ConfirmIssuanceView(APIView):
         old_status = found_item.status
         found_item.status = 'issued'
         found_item.save()
-        
+        item_id = request.data.get("item_id")
+        action_type = request.data.get("action_type")
+
+        History.objects.create(
+            user=request.user,
+            item_id=item_id,
+            action_type=action_type,
+        )
 
         # Логирование
         from .utils import log_action
@@ -1258,6 +1265,19 @@ class AppealCreateView(generics.CreateAPIView):
             appeal.found_item.status = 'in_pickup'
             appeal.found_item.save(update_fields=['status'])
 
+class ClaimHistoryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        found_item_id = request.data["found_item_id"]
+
+        History.objects.create(
+            user=request.user,
+            item_id=found_item_id,
+            action_type="claim",
+        )
+
+        return Response({"status": "ok"})
 
 class AppealDetailView(generics.RetrieveUpdateAPIView):
     """Просмотр и обновление обращения"""
@@ -1381,3 +1401,19 @@ class NotificationListCreateView(generics.ListCreateAPIView):
         for admin in admins:
             notifications.append(Notification(user=admin, **validated_data))
         Notification.objects.bulk_create(notifications)
+
+class HistoryCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        history = History.objects.create(
+            user=request.user,
+            item_id=request.data.get("item_id"),
+            action_type=request.data.get("action_type"),
+            meta=request.data.get("meta", {}),
+        )
+
+        return Response({
+            "id": history.id,
+            "status": "ok"
+        })

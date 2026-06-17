@@ -86,4 +86,5 @@ path(
     ),
 
     path('notifications/', NotificationListCreateView.as_view(), name='notifications'),
+    path('history/', views.ClaimHistoryView.as_view())
 ]

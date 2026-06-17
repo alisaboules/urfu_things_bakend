@@ -375,3 +375,22 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ['-action_time']
+
+class History(models.Model):
+    ACTION_TYPES = (
+        ("claim", "Claim item"),
+        ("confirm", "Confirm issuance"),
+        ("delete", "Delete item"),
+    )
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    item_id = models.IntegerField()
+
+    action_type = models.CharField(max_length=30, choices=ACTION_TYPES)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    meta = models.JSONField(null=True, blank=True)  # доп. данные (опционально)
+
+    def __str__(self):
+        return f"{self.user} - {self.action_type} - {self.item_id}"
