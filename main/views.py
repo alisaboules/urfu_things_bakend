@@ -865,6 +865,7 @@ class ConfirmIssuanceView(APIView):
         found_item.status = 'issued'
         found_item.save()
         
+        
         # Логирование
         from .utils import log_action
         log_action(
