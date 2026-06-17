@@ -889,7 +889,13 @@ class ConfirmIssuanceView(APIView):
             'issuance': IssuanceSerializer(issuance).data
         }, status=201)
 
+# class HistoryListView(generics.ListAPIView):
+#     serializer_class = HistorySerializer
+#     permission_classes = [IsAuthenticated]
 
+#     def get_queryset(self):
+#         return History.objects.filter(user=self.request.user)
+    
 class PickupPointItemsView(generics.ListAPIView):
     """Просмотр вещей, переданных в пункт выдачи сотрудника"""
     serializer_class = FoundItemSerializer
@@ -1417,3 +1423,4 @@ class HistoryCreateView(APIView):
             "id": history.id,
             "status": "ok"
         })
+    
