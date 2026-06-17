@@ -840,10 +840,10 @@ class ConfirmIssuanceView(APIView):
         except User.DoesNotExist:
             return Response({'error': 'Пользователь не найден'}, status=404)
 
-            # если вдруг статус ещё active — переводим в in_pickup
-        if found_item.status == "active":
-            found_item.status = "in_pickup"
-            found_item.save()
+        # # если вдруг статус ещё active — переводим в in_pickup
+        # if found_item.status == "active":
+        #     found_item.status = "in_pickup"
+        #     found_item.save()
 
         # защита (как у тебя уже есть)
         if found_item.status != 'in_pickup':
