@@ -97,6 +97,15 @@ class FoundItemListCreateAPIView(generics.ListCreateAPIView):
         context = super().get_serializer_context()
         context.update({"request": self.request})
         return context
+    
+    
+    def get_queryset(self):
+        queryset = FoundItem.objects.all().order_by('-created_at')
+        # Если пользователь не админ и не сотрудник, показываем только активные
+        user = self.request.user
+        if not (user.is_authenticated and (user.is_superuser or getattr(user, 'role', '') in ['admin', 'pickup_point'])):
+            queryset = queryset.filter(status='active')
+        return queryset
 
 class FoundItemRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     # Просмотр, обновление и удаление находки
