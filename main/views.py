@@ -928,19 +928,17 @@ class PickupPointItemsView(generics.ListAPIView):
 class PickupPointIssuanceHistoryView(generics.ListAPIView):
     """История выдач пункта выдачи"""
     serializer_class = IssuanceSerializer
-    permission_classes = [IsStaffOrPickupPoint]
+    permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         user = self.request.user
-        user_role = getattr(user, 'role', '')
-        
-        if user_role == 'admin':
-            return Issuance.objects.all().order_by('-issued_at')
-        elif user_role == 'pickup_point':
-            pickup_point_id = getattr(user, 'pickup_point_id', None)
-            if pickup_point_id:
-                return Issuance.objects.filter(pickup_point_id=pickup_point_id).order_by('-issued_at')
-        
+
+        if user.role == "student":
+            return Issuance.objects.filter(user=user)
+
+        if user.role == "pickup_point":
+            return Issuance.objects.filter(pickup_point_id=user.pickup_point_id)
+
         return Issuance.objects.none()
     
 class LogListView(generics.ListAPIView):
@@ -1016,7 +1014,8 @@ class MeView(APIView):
         return Response(
             serializer.errors,
             status=400
-        )    
+        )
+        
 class NearestPickupPointView(APIView):
     """
     Определяет ближайший пункт выдачи на основе геолокации пользователя
